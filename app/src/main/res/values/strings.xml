@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">LockAlarm</string>
+    <string name="alarm_channel_name">활성 알람</string>
+    <string name="alarm_channel_description">잠금 화면 알람 및 재생 제어</string>
+</resources>

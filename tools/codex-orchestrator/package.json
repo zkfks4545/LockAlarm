@@ -1,0 +1,26 @@
+{
+  "name": "codex-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A ChatGPT-authenticated Codex App Server multi-agent orchestrator.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "codex-orchestrate": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "test:mock": "npm run build && node dist/index.js run --goal \"mock verification\" --cwd . --workers 2 --mock",
+    "test:integration": "npm run build && node dist/index.js doctor",
+    "doctor": "npm run build && node dist/index.js doctor",
+    "models": "npm run build && node dist/index.js models"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}

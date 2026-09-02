@@ -1,0 +1,29 @@
+# Android/Gradle local state
+.gradle/
+.kotlin/
+.idea/
+local.properties
+**/build/
+*.iml
+
+# Local Codex configuration and generated workspace data
+.codex/
+
+# Node dependencies and compiled helper output
+**/node_modules/
+tools/codex-orchestrator/dist/
+tools/codex-orchestrator/.env
+tools/codex-orchestrator/.env.*
+!tools/codex-orchestrator/.env.example
+
+# Keep only the explicitly published latest APK and development summary
+outputs/*.apk
+!outputs/routine-alarm-integrated-final-v15.7-debug.apk
+outputs/*.zip
+outputs/*.md
+!outputs/planning-and-slice-summary.md
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
