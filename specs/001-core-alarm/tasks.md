@@ -76,10 +76,38 @@
 - [x] T344 0.15.5 실제 알람 종료 버튼을 스누즈와 같은 둥근 버튼·알람끄기 문구로 통일한다.
 - [x] T345 0.15.6 폴드·창 크기 전환 중 표면이 보고하는 0초를 무시하고 마지막 정상 로컬 영상 위치를 보존한다.
 - [x] T346 0.15.7 화면 잠금 타이머 켜짐/꺼짐과 0~60초 지연, Room 5→6 마이그레이션을 연결한다.
+- [x] T347 0.15.8 현재 울림·스누즈 중 새 정규 알람을 Room에서 `PREEMPTED` 처리하고 새 알람을 즉시 시작하며, 이전 FIFO `WAITING` 행은 재생하지 않는다.
+- [x] T348 0.15.8 울림 중 낮아진 `STREAM_MUSIC`만 2초 간격·최대 음량 5%(최소 1단계)로 목표까지 점진 복원하고, 세션 종료·스누즈 대기·선점 때 감시를 취소한다.
+- [x] T349 0.15.8 오래된 start intent의 역선점을 막는 `CLAIMED` 재검증과 sessionId 제한 종료 broadcast를 연결하고 정책 단위 테스트를 추가한다.
+- [x] T350 0.15.8 README/Living Spec/current-state/data-model/planning/version log와 debug APK 버전 기록을 갱신한다.
+- [x] T351 0.15.9 숫자 시·분 입력 중 과거 중간 값으로 날짜가 내일로 고정되지 않게 하고, 저장 시 오늘 과거 시각만 내일로 자동 보정한다.
+- [x] T352 0.15.9 README/CHANGELOG/Living Spec/current-state/planning/version log와 debug APK 버전 기록을 갱신한다.
+- [x] T353 0.15.10 홈에서 저장한 다크·라이트 테마를 알람 편집 화면에도 전달하고 편집 화면 루트에 현재 Material 배경을 적용한다.
+- [x] T354 0.15.10 README/CHANGELOG/Living Spec/current-state/planning/version log와 debug APK 버전 기록을 갱신한다.
+- [x] T355 0.15.11 알람 활성화 경로에서 날짜 미지정 1회성 알람을 오늘 우선으로 계산하고, 이미 지난 시각만 다음날로 보정한다.
+- [x] T356 0.15.11 편집 화면에 요일별과 별도의 매일 반복을 추가하고 일정 계산·전달 뒤 재예약을 연결한다.
+- [x] T357 0.15.11 `oneTimeDateUserSelected` Room 6→7 마이그레이션, 회귀 테스트, Living Spec·README·버전 기록과 debug APK를 갱신한다.
+- [x] T358 0.15.12 홈 토글 활성화에서 오래된 자동·과거 날짜를 오늘 우선으로 재기준하고 미래 명시 날짜는 보존하며, 레거시 가져오기 날짜를 미선택으로 처리한다.
+- [x] T359 0.15.12 공통 울림 표면의 중앙 스와이프 영역을 `알람끄기`·스누즈 버튼 아래에 배치해 버튼 터치 가로채기를 방지하고 날짜 경계 회귀 테스트를 추가한다.
+- [x] T360 0.15.12 Living Spec/README/CHANGELOG/version log와 debug APK 버전 기록을 갱신하고 테스트·lint·assembleDebug를 실행한다.
+- [x] T361 0.15.13 공통 울림 화면의 위로 밀기 영역을 하단 동작 행 위로 분리하고, `5분 스누즈`·`알람끄기`를 중앙 인접 가로 행으로 배치해 터치 영역을 격리한다.
+- [x] T362 0.15.13 APK 버전·Living Spec/README/CHANGELOG/version log를 갱신하고 테스트·lint·assembleDebug를 실행한다.
 
 ## 정책 결정 대기
 
-- [x] D001 현재 울림 중 새 정규 발생은 FIFO 대기, 스누즈 대기 중 새 정규 발생은 우선 실행으로 확정·구현한다.
+- [x] T363 0.15.15 스누즈 예약 인텐트에 회차·예정 시각을 포함하고 Broadcast 수신부에서 현재 세션·회차·due를 검증한다.
+- [x] T364 0.15.15 재생 서비스에서 동일 검증을 재실행하고, 같은 부팅 elapsed/reboot wall-clock fallback과 조기 전달 재예약을 연결한다.
+- [x] T365 0.15.15 검증 정책 테스트와 APK 버전·Living Spec/README/CHANGELOG/version log를 갱신하고 테스트·lint·assembleDebug를 실행한다.
+- [x] T366 0.15.16 스누즈 상태 전이·UI·알림 액션의 회차 상한을 제거하고 재울림마다 스누즈 버튼을 유지한다.
+- [x] T367 0.15.16 스누즈 성공 확인 알림을 대기 상태 알림과 별도 ID로 발행하고 재울림·해제·취소·선점 시 정리한다.
+- [x] T368 0.15.16 무제한 회차 테스트와 APK 버전·Living Spec/README/CHANGELOG/version log를 갱신하고 테스트·lint·assembleDebug를 실행한다.
+- [x] T369 0.15.17 YouTube IFrame 컨트롤·키보드·전체화면 옵션과 WebView 직접 입력을 차단하고 HTML 회귀 테스트·문서·APK를 갱신한다.
+- [x] T370 0.15.19 화면 잠금 타이머 최대값을 선택한 로컬 미디어 길이와 연결하고, 길이 확인 불가 콘텐츠의 60초 fallback 및 편집·서비스 판정을 통합한다.
+- [x] T371 0.15.20 반복 알람의 복구·재예약을 현재 현지 날짜 기준으로 다시 계산해 오늘의 유효 시각을 우선한다.
+- [x] T372 0.15.20 반복 알람 해제 시 오늘 회차를 건너뛰고 다음 유효 회차를 저장·예약하며, 매일 알람이 내일부터 재개되도록 단위 테스트를 추가한다.
+- [x] T373 0.15.20 README/Living Spec/current-state/CHANGELOG/version log와 debug APK 기록을 갱신하고 테스트·lint·assembleDebug를 실행한다.
+
+- [x] D001 새 정규 발생은 현재 울림·스누즈 대기·스누즈 재울림을 모두 선점하고 즉시 시작한다. 단일 서비스·재생 세션을 유지하며 이전 FIFO `WAITING` 행은 취소한다.
 - [ ] D002 전원이 꺼진 사이 지난 정규/스누즈 발생의 만료 정책.
 - [ ] D003 자동 밝기 모드 처리 정책.
 - [x] D004 YouTube 임베디드 재생 중 세션·알림과 로컬 원형 해제 동선을 유지한다.

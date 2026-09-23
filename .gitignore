@@ -18,7 +18,7 @@ tools/codex-orchestrator/.env.*
 
 # Keep only the explicitly published latest APK and development summary
 outputs/*.apk
-!outputs/routine-alarm-integrated-final-v15.7-debug.apk
+!outputs/routine-alarm-integrated-final-v15.19-debug.apk
 outputs/*.zip
 outputs/*.md
 !outputs/planning-and-slice-summary.md

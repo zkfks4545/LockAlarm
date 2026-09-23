@@ -87,13 +87,14 @@ object AlarmSnoozePolicy {
         alarm: AlarmSpec,
         session: AlarmSession,
         nowMillis: Long,
+        delaySeconds: Int = alarm.dismissDelaySeconds,
     ): Boolean = alarm.enabled &&
         alarm.id == session.alarmId &&
         session.state == AlarmSessionState.FIRING &&
-        session.snoozeCount == 0 &&
+        session.snoozeCount >= 0 &&
         AlarmInteractionGate.isUnlocked(
             ringStartedAtMillis = session.ringStartedAtMillis,
-            delaySeconds = alarm.dismissDelaySeconds,
+            delaySeconds = delaySeconds,
             nowMillis = nowMillis,
         )
 

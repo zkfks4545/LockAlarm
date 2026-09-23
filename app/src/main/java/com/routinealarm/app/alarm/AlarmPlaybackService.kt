@@ -27,6 +27,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.routinealarm.app.data.AlarmRepository
 import com.routinealarm.app.data.local.AlarmOccurrenceStatus
+import com.routinealarm.app.media.AlarmMediaDuration
 import com.routinealarm.app.model.ContentMode
 import com.routinealarm.app.model.AlarmSoundPolicy
 import com.routinealarm.app.model.RepeatType
@@ -49,6 +50,8 @@ class AlarmPlaybackService : Service() {
     private var volumeRampSessionId = ""
     private var volumeRampPlayer: MediaPlayer? = null
     private var volumeRampStartedAtElapsedRealtime = 0L
+    private var deviceVolumeRampGeneration = 0L
+    private var deviceVolumeRampSessionId = ""
     private val restoreSurface = Runnable { ensureAlarmSurface() }
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -95,6 +98,42 @@ class AlarmPlaybackService : Service() {
             }
         }
     }
+    private val deviceVolumeRamp = object : Runnable {
+        override fun run() {
+            val sessionId = deviceVolumeRampSessionId
+            val generation = deviceVolumeRampGeneration
+            if (
+                sessionId.isBlank() ||
+                !hasActiveForegroundSession ||
+                deviceVolumeRampGeneration != generation
+            ) {
+                return
+            }
+
+            val session = sessionStore.load()
+            val alarm = session?.takeIf {
+                it.sessionId == sessionId && it.state == AlarmSessionState.FIRING
+            }?.let { repository.load(it.alarmId) }
+            if (session == null || alarm == null || !alarm.enabled) {
+                cancelDeviceVolumeRamp()
+                return
+            }
+
+            val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val nextVolume = DeviceVolumeRampPolicy.nextVolume(
+                currentVolume = currentVolume,
+                maxVolume = maxVolume,
+                targetPercent = alarm.mediaVolumePercent,
+            )
+            if (nextVolume > currentVolume) {
+                runCatching {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, nextVolume, 0)
+                }
+            }
+            mainHandler.postDelayed(this, DeviceVolumeRampPolicy.DEFAULT_INTERVAL_MILLIS)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -130,23 +169,51 @@ class AlarmPlaybackService : Service() {
             ACTION_SNOOZE -> snoozeAlarm(
                 alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1),
                 requestedSessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
+                expectedSnoozeCount = intent.getIntExtra(
+                    AlarmScheduler.EXTRA_SNOOZE_COUNT,
+                    SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+                ),
                 startId = startId,
             )
             ACTION_ENSURE_VISIBLE -> ensureActiveAlarmVisible(startId)
-            ACTION_START -> startAlarm(
-                requestedId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1),
-                occurrenceKind = intent.getStringExtra(AlarmScheduler.EXTRA_OCCURRENCE_KIND)
+            ACTION_START -> {
+                val occurrenceKind = intent.getStringExtra(AlarmScheduler.EXTRA_OCCURRENCE_KIND)
                     ?.let { stored -> AlarmOccurrenceKind.entries.firstOrNull { it.name == stored } }
-                    ?: AlarmOccurrenceKind.REGULAR,
-                occurrenceId = intent.getStringExtra(AlarmScheduler.EXTRA_OCCURRENCE_ID).orEmpty(),
-                scheduleRevision = intent.getLongExtra(
-                    AlarmScheduler.EXTRA_SCHEDULE_REVISION,
-                    -1L,
-                ),
-                sessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
-                preemptSnooze = intent.getBooleanExtra(EXTRA_PREEMPT_SNOOZE, false),
-                startId = startId,
-            )
+                    ?: AlarmOccurrenceKind.REGULAR
+                val snoozeTicket = if (occurrenceKind == AlarmOccurrenceKind.SNOOZE) {
+                    SnoozeDeliveryTicket(
+                        alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1),
+                        occurrenceId = intent.getStringExtra(AlarmScheduler.EXTRA_OCCURRENCE_ID).orEmpty(),
+                        scheduleRevision = intent.getLongExtra(
+                            AlarmScheduler.EXTRA_SCHEDULE_REVISION,
+                            -1L,
+                        ),
+                        sessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
+                        snoozeCount = intent.getIntExtra(
+                            AlarmScheduler.EXTRA_SNOOZE_COUNT,
+                            SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+                        ),
+                        dueAtMillis = intent.getLongExtra(
+                            AlarmScheduler.EXTRA_TRIGGER_AT,
+                            SnoozeDeliveryValidation.NO_DUE_AT_MILLIS,
+                        ),
+                    )
+                } else {
+                    null
+                }
+                startAlarm(
+                    requestedId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1),
+                    occurrenceKind = occurrenceKind,
+                    occurrenceId = intent.getStringExtra(AlarmScheduler.EXTRA_OCCURRENCE_ID).orEmpty(),
+                    scheduleRevision = intent.getLongExtra(
+                        AlarmScheduler.EXTRA_SCHEDULE_REVISION,
+                        -1L,
+                    ),
+                    sessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
+                    snoozeTicket = snoozeTicket,
+                    startId = startId,
+                )
+            }
             else -> recoverActiveAlarm(startId)
         }
         return START_STICKY
@@ -168,6 +235,7 @@ class AlarmPlaybackService : Service() {
     private fun ensureAlarmSurface() {
         val session = sessionStore.load() ?: return
         if (session.state != AlarmSessionState.FIRING) return
+        if (!repository.occurrenceIsFiring(session.occurrenceId, session.sessionId)) return
         val alarm = repository.load(session.alarmId)
             ?.takeIf { it.enabled }
             ?: return
@@ -217,7 +285,7 @@ class AlarmPlaybackService : Service() {
                 occurrenceId = session.occurrenceId,
                 scheduleRevision = session.scheduleRevision,
                 sessionId = session.sessionId,
-                preemptSnooze = false,
+                isRecovery = true,
                 startId = startId,
             )
             AlarmSessionState.SNOOZED -> stopSelfResult(startId)
@@ -230,7 +298,8 @@ class AlarmPlaybackService : Service() {
         occurrenceId: String,
         scheduleRevision: Long,
         sessionId: String,
-        preemptSnooze: Boolean,
+        snoozeTicket: SnoozeDeliveryTicket? = null,
+        isRecovery: Boolean = false,
         startId: Int,
     ) {
         val alarm = repository.load(requestedId)
@@ -249,11 +318,16 @@ class AlarmPlaybackService : Service() {
         var existingSession = sessionStore.load()
         if (
             occurrenceKind == AlarmOccurrenceKind.REGULAR &&
-            existingSession?.state == AlarmSessionState.SNOOZED &&
-            existingSession.sessionId != sessionId &&
-            preemptSnooze
+            existingSession != null &&
+            existingSession.sessionId != sessionId
         ) {
-            preemptSnoozedSession(existingSession)
+            // Room is authoritative for preemption. An old start intent must
+            // not tear down a session that superseded it before this intent ran.
+            if (!repository.occurrenceIsClaimed(occurrenceId, sessionId)) {
+                rejectStartIfIdle(startId)
+                return
+            }
+            preemptActiveSession(existingSession)
             existingSession = sessionStore.load()
         }
         if (occurrenceKind == AlarmOccurrenceKind.SNOOZE) {
@@ -263,10 +337,26 @@ class AlarmPlaybackService : Service() {
                 existingSession.sessionId == sessionId
             val isAlreadyResumed = isMatchingSession &&
                 existingSession.state == AlarmSessionState.FIRING &&
-                existingSession.snoozeCount == 1
+                (
+                    isRecovery ||
+                        snoozeTicket?.let {
+                            SnoozeDeliveryValidation.matchesResumedSession(existingSession, it)
+                        } == true
+                )
+            val resumed = if (!isAlreadyResumed && snoozeTicket != null) {
+                sessionStore.resumeSnoozed(
+                    ticket = snoozeTicket,
+                    clock = SnoozeDeliveryClock(
+                        nowWallMillis = System.currentTimeMillis(),
+                        nowElapsedRealtime = SystemClock.elapsedRealtime(),
+                        currentBootCount = sessionStore.currentBootCount(),
+                    ),
+                )
+            } else {
+                false
+            }
             if (
-                !isAlreadyResumed &&
-                (!isMatchingSession || !sessionStore.resumeSnoozed(requestedId, System.currentTimeMillis()))
+                !isMatchingSession || (!isAlreadyResumed && !resumed)
             ) {
                 rejectStartIfIdle(startId)
                 return
@@ -289,6 +379,12 @@ class AlarmPlaybackService : Service() {
             return
         }
 
+        if (occurrenceKind == AlarmOccurrenceKind.SNOOZE) {
+            getSystemService(NotificationManager::class.java).cancel(
+                AlarmNotificationFactory.snoozeConfirmationNotificationId(alarm.id),
+            )
+        }
+
         repository.rememberRecentContent(alarm)
 
         deviceStateController.applyInitialValuesOnce(
@@ -305,7 +401,10 @@ class AlarmPlaybackService : Service() {
         val notification = AlarmNotificationFactory(this).buildRinging(
             alarmId = alarm.id,
             sessionId = sessionId,
-            snoozeAvailable = (sessionStore.load()?.snoozeCount ?: 0) == 0,
+            snoozeAvailable = sessionStore.load()?.let {
+                it.state == AlarmSessionState.FIRING && it.snoozeCount >= 0
+            } == true,
+            snoozeCycle = sessionStore.load()?.snoozeCount ?: SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
             fullScreen = !canUseUnlockedOverlay,
         )
         val foregroundType = when {
@@ -322,6 +421,7 @@ class AlarmPlaybackService : Service() {
             foregroundType,
         )
         hasActiveForegroundSession = true
+        startDeviceVolumeRamp(sessionId)
 
         if (alarm.contentMode == ContentMode.LOCAL && mediaPlayer == null && fallbackTone == null) {
             requestAudioFocus()
@@ -448,7 +548,12 @@ class AlarmPlaybackService : Service() {
             .also(audioManager::requestAudioFocus)
     }
 
-    private fun snoozeAlarm(alarmId: Int, requestedSessionId: String, startId: Int) {
+    private fun snoozeAlarm(
+        alarmId: Int,
+        requestedSessionId: String,
+        expectedSnoozeCount: Int,
+        startId: Int,
+    ) {
         val alarm = repository.load(alarmId)
         if (alarm == null || !alarm.enabled || alarm.id != alarmId) {
             rejectStartIfIdle(startId)
@@ -459,7 +564,22 @@ class AlarmPlaybackService : Service() {
             rejectStartIfIdle(startId)
             return
         }
-        if (!AlarmSnoozePolicy.canSnooze(alarm, previousSession, System.currentTimeMillis())) {
+        if (
+            expectedSnoozeCount != SnoozeDeliveryValidation.NO_SNOOZE_COUNT &&
+                previousSession.snoozeCount != expectedSnoozeCount
+        ) {
+            rejectStartIfIdle(startId)
+            return
+        }
+        val dismissDelaySeconds = AlarmMediaDuration.effectiveDismissDelaySeconds(this, alarm)
+        if (
+            !AlarmSnoozePolicy.canSnooze(
+                alarm = alarm,
+                session = previousSession,
+                nowMillis = System.currentTimeMillis(),
+                delaySeconds = dismissDelaySeconds,
+            )
+        ) {
             return
         }
         val dueAtMillis = SnoozePolicy.dueAt(System.currentTimeMillis())
@@ -492,18 +612,28 @@ class AlarmPlaybackService : Service() {
                 return
             }
 
+        // A snooze is a new media playback cycle. Invalidate the old video
+        // or YouTube surface after scheduling succeeds so its final detach
+        // callback cannot restore the old position into the re-ring.
+        AlarmPlaybackPositionStore.invalidateAndReset(previousSession.sessionId)
         releasePlayback()
         overlayController.remove()
-        sendBroadcast(AlarmRingActivity.finishIntent(this))
+        sendBroadcast(AlarmRingActivity.finishIntent(this, previousSession.sessionId))
         stopForeground(STOP_FOREGROUND_REMOVE)
         hasActiveForegroundSession = false
-        getSystemService(NotificationManager::class.java).notify(
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        val notificationFactory = AlarmNotificationFactory(this)
+        notificationManager.notify(
             AlarmNotificationFactory.notificationId(alarmId),
-            AlarmNotificationFactory(this).buildSnoozed(
+            notificationFactory.buildSnoozed(
                 alarmId,
                 previousSession.sessionId,
                 dueAtMillis,
             ),
+        )
+        notificationManager.notify(
+            AlarmNotificationFactory.snoozeConfirmationNotificationId(alarmId),
+            notificationFactory.buildSnoozeConfirmation(alarmId, dueAtMillis),
         )
         stopSelf()
     }
@@ -525,7 +655,7 @@ class AlarmPlaybackService : Service() {
             session.state == AlarmSessionState.FIRING &&
             !AlarmInteractionGate.isUnlocked(
                 ringStartedAtMillis = session.ringStartedAtMillis,
-                delaySeconds = alarm.dismissDelaySeconds,
+                delaySeconds = AlarmMediaDuration.effectiveDismissDelaySeconds(this, alarm),
                 nowMillis = System.currentTimeMillis(),
             )
         ) {
@@ -539,12 +669,19 @@ class AlarmPlaybackService : Service() {
         AlarmPlaybackPositionStore.clear(session.sessionId)
         releasePlayback()
         overlayController.remove()
-        AlarmScheduler(this).cancelSnooze(alarmId)
+        val scheduler = AlarmScheduler(this)
+        if (alarm.repeatType != RepeatType.ONE_TIME) {
+            scheduler.scheduleNextAfterDismissal(alarmId)
+        }
+        scheduler.cancelSnooze(alarmId)
         deviceStateController.finishAndMaybeRestore()
         if (alarm.repeatType == RepeatType.ONE_TIME) repository.disable(alarmId)
-        sendBroadcast(AlarmRingActivity.finishIntent(this))
+        sendBroadcast(AlarmRingActivity.finishIntent(this, session.sessionId))
         getSystemService(NotificationManager::class.java)
-            .cancel(AlarmNotificationFactory.notificationId(alarmId))
+            .apply {
+                cancel(AlarmNotificationFactory.notificationId(alarmId))
+                cancel(AlarmNotificationFactory.snoozeConfirmationNotificationId(alarmId))
+            }
         stopForeground(STOP_FOREGROUND_REMOVE)
         hasActiveForegroundSession = false
         startNextWaitingOrStop(startId)
@@ -564,30 +701,44 @@ class AlarmPlaybackService : Service() {
             rejectStartIfIdle(startId)
             return
         }
-        releasePlayback()
-        overlayController.remove()
-        AlarmScheduler(this).cancel(alarmId)
-        if (session?.alarmId == alarmId) {
+        val activeSession = session?.takeIf { it.alarmId == alarmId }
+        if (activeSession != null) {
+            releasePlayback()
+            overlayController.remove()
+            AlarmScheduler(this).cancel(alarmId)
             repository.finishOccurrence(
-                session.occurrenceId,
-                session.sessionId,
+                activeSession.occurrenceId,
+                activeSession.sessionId,
                 AlarmOccurrenceStatus.CANCELLED,
             )
             deviceStateController.finishAndMaybeRestore()
-            AlarmPlaybackPositionStore.clear(session.sessionId)
+            AlarmPlaybackPositionStore.clear(activeSession.sessionId)
+        } else {
+            AlarmScheduler(this).cancel(alarmId)
         }
         repository.disable(alarmId)
-        sendBroadcast(AlarmRingActivity.finishIntent(this))
+        if (activeSession != null) {
+            sendBroadcast(AlarmRingActivity.finishIntent(this, activeSession.sessionId))
+        }
         getSystemService(NotificationManager::class.java)
-            .cancel(AlarmNotificationFactory.notificationId(alarmId))
+            .apply {
+                cancel(AlarmNotificationFactory.notificationId(alarmId))
+                cancel(AlarmNotificationFactory.snoozeConfirmationNotificationId(alarmId))
+            }
+        if (activeSession == null) return
         stopForeground(STOP_FOREGROUND_REMOVE)
         hasActiveForegroundSession = false
         startNextWaitingOrStop(startId)
     }
 
-    private fun preemptSnoozedSession(session: AlarmSession) {
+    private fun preemptActiveSession(session: AlarmSession) {
         val previousAlarm = repository.load(session.alarmId)
         AlarmScheduler(this).cancelSnooze(session.alarmId)
+        repository.finishOccurrence(
+            session.occurrenceId,
+            session.sessionId,
+            AlarmOccurrenceStatus.PREEMPTED,
+        )
         releasePlayback()
         overlayController.remove()
         AlarmPlaybackPositionStore.clear(session.sessionId)
@@ -595,31 +746,19 @@ class AlarmPlaybackService : Service() {
         if (previousAlarm?.repeatType == RepeatType.ONE_TIME) {
             repository.disable(session.alarmId)
         }
-        sendBroadcast(AlarmRingActivity.finishIntent(this))
+        sendBroadcast(AlarmRingActivity.finishIntent(this, session.sessionId))
         getSystemService(NotificationManager::class.java)
-            .cancel(AlarmNotificationFactory.notificationId(session.alarmId))
+            .apply {
+                cancel(AlarmNotificationFactory.notificationId(session.alarmId))
+                cancel(AlarmNotificationFactory.snoozeConfirmationNotificationId(session.alarmId))
+            }
     }
 
     private fun startNextWaitingOrStop(startId: Int) {
-        val waiting = repository.claimNextWaitingOccurrence()
-        if (waiting == null) {
-            stopSelfResult(startId)
-            return
-        }
-        startAlarm(
-            requestedId = waiting.alarmId,
-            occurrenceKind = AlarmOccurrenceKind.REGULAR,
-            occurrenceId = waiting.occurrenceId,
-            scheduleRevision = waiting.scheduleRevision,
-            sessionId = waiting.sessionId,
-            preemptSnooze = false,
-            startId = startId,
-        )
-        val alarm = repository.load(waiting.alarmId)
-        val activeSession = sessionStore.load()
-        if (alarm != null && activeSession?.sessionId == waiting.sessionId) {
-            mainHandler.post { openRingActivity(alarm.id, waiting.sessionId) }
-        }
+        // WAITING rows were created by older FIFO builds. They must never revive
+        // after switching to the new-alarm-first policy.
+        repository.cancelWaitingOccurrences()
+        stopSelfResult(startId)
     }
 
     private fun openRingActivity(alarmId: Int, sessionId: String) {
@@ -638,6 +777,7 @@ class AlarmPlaybackService : Service() {
     }
 
     private fun releasePlayback() {
+        cancelDeviceVolumeRamp()
         cancelVolumeRamp()
         mediaPlayer?.runCatching {
             stop()
@@ -656,7 +796,22 @@ class AlarmPlaybackService : Service() {
         runCatching { unregisterReceiver(screenStateReceiver) }
         overlayController.remove()
         releasePlayback()
+        restoreTerminalSessionIfNeeded()
         super.onDestroy()
+    }
+
+    private fun restoreTerminalSessionIfNeeded() {
+        val session = sessionStore.load() ?: return
+        if (
+            session.state != AlarmSessionState.FIRING ||
+            repository.occurrenceIsFiring(session.occurrenceId, session.sessionId)
+        ) {
+            return
+        }
+        // A service teardown can race the final dismiss/cancel request. Only
+        // restore here when Room already says the occurrence is no longer
+        // firing; an active session remains recoverable after process death.
+        deviceStateController.finishAndMaybeRestore()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -666,13 +821,28 @@ class AlarmPlaybackService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun startDeviceVolumeRamp(sessionId: String) {
+        if (deviceVolumeRampSessionId == sessionId) return
+        cancelDeviceVolumeRamp()
+        deviceVolumeRampSessionId = sessionId
+        mainHandler.postDelayed(
+            deviceVolumeRamp,
+            DeviceVolumeRampPolicy.DEFAULT_INTERVAL_MILLIS,
+        )
+    }
+
+    private fun cancelDeviceVolumeRamp() {
+        mainHandler.removeCallbacks(deviceVolumeRamp)
+        deviceVolumeRampSessionId = ""
+        deviceVolumeRampGeneration += 1L
+    }
+
     companion object {
         private const val ACTION_START = "com.routinealarm.app.action.START_ALARM"
         private const val ACTION_DISMISS = "com.routinealarm.app.action.DISMISS_ALARM"
         private const val ACTION_CANCEL = "com.routinealarm.app.action.CANCEL_ALARM"
         private const val ACTION_SNOOZE = "com.routinealarm.app.action.SNOOZE_ALARM"
         private const val ACTION_ENSURE_VISIBLE = "com.routinealarm.app.action.ENSURE_VISIBLE"
-        private const val EXTRA_PREEMPT_SNOOZE = "preempt_snooze"
         private const val FALLBACK_TONE_MILLIS = 10_000
         private const val FALLBACK_REPEAT_MILLIS = 9_500L
         private const val SURFACE_RECOVERY_DELAY_MILLIS = 120L
@@ -684,7 +854,7 @@ class AlarmPlaybackService : Service() {
             occurrenceId: String,
             scheduleRevision: Long,
             sessionId: String,
-            preemptSnooze: Boolean = false,
+            snoozeTicket: SnoozeDeliveryTicket? = null,
         ): Intent =
             Intent(context, AlarmPlaybackService::class.java)
                 .setAction(ACTION_START)
@@ -693,7 +863,12 @@ class AlarmPlaybackService : Service() {
                 .putExtra(AlarmScheduler.EXTRA_OCCURRENCE_ID, occurrenceId)
                 .putExtra(AlarmScheduler.EXTRA_SCHEDULE_REVISION, scheduleRevision)
                 .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
-                .putExtra(EXTRA_PREEMPT_SNOOZE, preemptSnooze)
+                .apply {
+                    snoozeTicket?.let {
+                        putExtra(AlarmScheduler.EXTRA_TRIGGER_AT, it.dueAtMillis)
+                        putExtra(AlarmScheduler.EXTRA_SNOOZE_COUNT, it.snoozeCount)
+                    }
+                }
 
         fun dismissIntent(context: Context, alarmId: Int, sessionId: String): Intent =
             Intent(context, AlarmPlaybackService::class.java)
@@ -701,11 +876,17 @@ class AlarmPlaybackService : Service() {
                 .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
                 .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
 
-        fun snoozeIntent(context: Context, alarmId: Int, sessionId: String): Intent =
+        fun snoozeIntent(
+            context: Context,
+            alarmId: Int,
+            sessionId: String,
+            expectedSnoozeCount: Int = SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+        ): Intent =
             Intent(context, AlarmPlaybackService::class.java)
                 .setAction(ACTION_SNOOZE)
                 .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
                 .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
+                .putExtra(AlarmScheduler.EXTRA_SNOOZE_COUNT, expectedSnoozeCount)
 
         fun cancelIntent(context: Context, alarmId: Int, sessionId: String = ""): Intent =
             Intent(context, AlarmPlaybackService::class.java)

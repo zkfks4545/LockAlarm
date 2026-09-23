@@ -123,7 +123,7 @@ class AlarmRingUiPolicyTest {
     }
 
     @Test
-    fun snoozeKeepsSessionIdentityAndRingStartAndCannotRepeat() {
+    fun snoozeKeepsSessionIdentityAndCanRepeatAfterEachResume() {
         val session = AlarmSession(
             alarmId = 7,
             occurrenceId = "occurrence-7",
@@ -161,12 +161,26 @@ class AlarmRingUiPolicyTest {
         assertEquals(session.ringStartedAtMillis, snoozed.ringStartedAtMillis)
         assertEquals(1, snoozed.snoozeCount)
         assertFalse(AlarmSnoozePolicy.canSnooze(alarm, snoozed, 6_000L))
-        assertFalse(
+        val resumed = snoozed.copy(
+            ringStartedAtMillis = 306_000L,
+            snoozeDueAtMillis = null,
+            snoozeDueAtElapsedRealtime = null,
+            snoozeBootCount = null,
+            state = AlarmSessionState.FIRING,
+        )
+        assertTrue(
             AlarmSnoozePolicy.canSnooze(
                 alarm,
-                session.copy(snoozeCount = 1),
-                6_000L,
+                resumed,
+                312_000L,
             ),
         )
+        val secondSnoozed = AlarmSnoozePolicy.snoozedSession(
+            session = resumed,
+            dueAtMillis = 612_000L,
+            dueAtElapsedRealtime = 612_000L,
+            bootCount = 4,
+        ) ?: error("expected repeated snooze transition")
+        assertEquals(2, secondSnoozed.snoozeCount)
     }
 }
