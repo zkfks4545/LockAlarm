@@ -32,6 +32,7 @@ class AlarmNotificationFactory(private val context: Context) {
         sessionId: String,
         snoozeAvailable: Boolean,
         fullScreen: Boolean,
+        snoozeCycle: Int = SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
     ): Notification {
         val ringIntent = PendingIntent.getActivity(
             context,
@@ -57,7 +58,12 @@ class AlarmNotificationFactory(private val context: Context) {
             val snoozeIntent = PendingIntent.getService(
                 context,
                 alarmId + SNOOZE_REQUEST_OFFSET,
-                AlarmPlaybackService.snoozeIntent(context, alarmId, sessionId),
+                AlarmPlaybackService.snoozeIntent(
+                    context = context,
+                    alarmId = alarmId,
+                    sessionId = sessionId,
+                    expectedSnoozeCount = snoozeCycle,
+                ),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             builder.addAction(R.drawable.ic_alarm, "5분 뒤 다시 알림", snoozeIntent)
@@ -72,6 +78,29 @@ class AlarmNotificationFactory(private val context: Context) {
             title = "5분 뒤 다시 울립니다",
             content = android.text.format.DateFormat.format("a h:mm", dueAtMillis),
         )
+    }
+
+    fun buildSnoozeConfirmation(alarmId: Int, dueAtMillis: Long): Notification {
+        val appIntent = PendingIntent.getActivity(
+            context,
+            alarmId + CONFIRMATION_ACTIVITY_REQUEST_OFFSET,
+            Intent(context, MainActivity::class.java)
+                .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_alarm)
+            .setContentTitle("스누즈 설정 완료")
+            .setContentText("5분 뒤에 알람이 울립니다.")
+            .setSubText(android.text.format.DateFormat.format("a h:mm", dueAtMillis))
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .setTimeoutAfter(SNOOZE_CONFIRMATION_TIMEOUT_MILLIS)
+            .setContentIntent(appIntent)
+            .build()
     }
 
     fun buildSnoozePermissionBlocked(alarmId: Int): Notification = buildSnoozeStatus(
@@ -118,7 +147,10 @@ class AlarmNotificationFactory(private val context: Context) {
     companion object {
         const val CHANNEL_ID = "active_alarm_v1"
         fun notificationId(alarmId: Int): Int = 41_000 + alarmId
+        fun snoozeConfirmationNotificationId(alarmId: Int): Int = 42_000 + alarmId
         private const val DISMISS_REQUEST_OFFSET = 30_000
         private const val SNOOZE_REQUEST_OFFSET = 50_000
+        private const val CONFIRMATION_ACTIVITY_REQUEST_OFFSET = 70_000
+        private const val SNOOZE_CONFIRMATION_TIMEOUT_MILLIS = 15_000L
     }
 }

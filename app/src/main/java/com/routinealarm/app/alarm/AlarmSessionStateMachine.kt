@@ -13,12 +13,11 @@ object AlarmSessionStateMachine {
     ): AlarmSessionState? = when (action) {
         AlarmSessionAction.SNOOZE ->
             AlarmSessionState.SNOOZED.takeIf {
-                currentState == AlarmSessionState.FIRING && snoozeCount == 0
+                currentState == AlarmSessionState.FIRING && snoozeCount >= 0
             }
         AlarmSessionAction.RESUME_SNOOZE ->
             AlarmSessionState.FIRING.takeIf {
-                currentState == AlarmSessionState.SNOOZED && snoozeCount == 1
+                currentState == AlarmSessionState.SNOOZED && snoozeCount > 0
             }
     }
 }
-

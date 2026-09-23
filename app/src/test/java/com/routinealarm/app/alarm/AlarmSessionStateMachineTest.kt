@@ -6,7 +6,7 @@ import org.junit.Test
 
 class AlarmSessionStateMachineTest {
     @Test
-    fun firstRingCanSnoozeOnce() {
+    fun firingRingCanSnoozeAtAnyCompletedCycle() {
         assertEquals(
             AlarmSessionState.SNOOZED,
             AlarmSessionStateMachine.nextState(
@@ -18,23 +18,40 @@ class AlarmSessionStateMachineTest {
     }
 
     @Test
-    fun secondSnoozeIsRejected() {
-        assertNull(
+    fun repeatedSnoozeIsAllowed() {
+        assertEquals(
+            AlarmSessionState.SNOOZED,
             AlarmSessionStateMachine.nextState(
                 AlarmSessionState.FIRING,
                 snoozeCount = 1,
                 action = AlarmSessionAction.SNOOZE,
             ),
         )
+        assertEquals(
+            AlarmSessionState.SNOOZED,
+            AlarmSessionStateMachine.nextState(
+                AlarmSessionState.FIRING,
+                snoozeCount = 7,
+                action = AlarmSessionAction.SNOOZE,
+            ),
+        )
     }
 
     @Test
-    fun scheduledSnoozeCanResumeOneRing() {
+    fun scheduledSnoozeCanResumeAnyPositiveCycle() {
         assertEquals(
             AlarmSessionState.FIRING,
             AlarmSessionStateMachine.nextState(
                 AlarmSessionState.SNOOZED,
                 snoozeCount = 1,
+                action = AlarmSessionAction.RESUME_SNOOZE,
+            ),
+        )
+        assertEquals(
+            AlarmSessionState.FIRING,
+            AlarmSessionStateMachine.nextState(
+                AlarmSessionState.SNOOZED,
+                snoozeCount = 7,
                 action = AlarmSessionAction.RESUME_SNOOZE,
             ),
         )
