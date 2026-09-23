@@ -16,29 +16,25 @@ class AlarmOverlapPolicyTest {
     }
 
     @Test
-    fun waitsBehindAnAlarmThatIsAlreadyRinging() {
+    fun preemptsAnAlarmThatIsAlreadyActive() {
         assertEquals(
-            OccurrenceClaimDisposition.WAIT,
+            OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START,
             AlarmOverlapPolicy.disposition(AlarmOccurrenceStatus.FIRING),
         )
         assertEquals(
-            OccurrenceClaimDisposition.WAIT,
+            OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START,
             AlarmOverlapPolicy.disposition(AlarmOccurrenceStatus.CLAIMED),
         )
     }
 
     @Test
-    fun regularAlarmPreemptsAWaitingSnooze() {
+    fun regularAlarmPreemptsAnySnoozePhase() {
         assertEquals(
-            OccurrenceClaimDisposition.PREEMPT_SNOOZE_AND_START,
+            OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START,
             AlarmOverlapPolicy.disposition(AlarmOccurrenceStatus.SNOOZED),
         )
-    }
-
-    @Test
-    fun snoozeThatHasStartedRingingIsTreatedAsRinging() {
         assertEquals(
-            OccurrenceClaimDisposition.WAIT,
+            OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START,
             AlarmOverlapPolicy.disposition(AlarmOccurrenceStatus.SNOOZE_CLAIMED),
         )
     }

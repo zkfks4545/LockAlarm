@@ -5,8 +5,11 @@ object AlarmOverlapPolicy {
         activeOccurrenceStatus
     ) {
         null -> OccurrenceClaimDisposition.START
-        AlarmOccurrenceStatus.SNOOZED ->
-            OccurrenceClaimDisposition.PREEMPT_SNOOZE_AND_START
-        else -> OccurrenceClaimDisposition.WAIT
+        AlarmOccurrenceStatus.CLAIMED,
+        AlarmOccurrenceStatus.FIRING,
+        AlarmOccurrenceStatus.SNOOZED,
+        AlarmOccurrenceStatus.SNOOZE_CLAIMED,
+        -> OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START
+        else -> OccurrenceClaimDisposition.START
     }
 }

@@ -15,7 +15,7 @@ For a substantial change, use this order: `sol_director` -> (as needed) `product
 ## Repository expectations
 
 - Keep this app offline-first and personal-use: no server, account, cloud sync, telemetry, or remote analytics.
-- Preserve the alarm-session contract: apply initial device brightness and media volume once at ring start, allow user changes while ringing, and restore only according to the configured dismiss policy.
+- Preserve the alarm-session contract: apply initial device brightness and media volume once at ring start, allow user changes while ringing, and only recover media volume upward toward the alarm target when it is lowered below that target. Never lower a user-selected higher volume, and restore only according to the configured dismiss policy.
 - Treat the foreground service and persisted session state as the source of truth across home, back, rotation, lock-screen recovery, and process recreation.
 - Keep local media and the official YouTube handoff paths separate; never add downloading, caching, extraction, or unofficial playback.
 - Update the relevant Living Spec/current-state/changelog documentation when behavior changes.
