@@ -25,6 +25,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.routinealarm.app.model.AlarmSpec
 import com.routinealarm.app.model.ContentMode
+import com.routinealarm.app.media.AlarmMediaDuration
 import com.routinealarm.app.ui.createAlarmVisualView
 import com.routinealarm.app.ui.readLocalVisualDisplaySize
 import com.routinealarm.app.youtube.YouTubeEmbed
@@ -137,9 +138,10 @@ class AlarmOverlayController(private val context: Context) {
         session: AlarmSession,
         mediaView: View,
     ): View {
+        val delaySeconds = AlarmMediaDuration.effectiveDismissDelaySeconds(context, alarm)
         val unlockAtMillis = AlarmInteractionGate.unlockAtMillis(
             ringStartedAtMillis = session.ringStartedAtMillis,
-            delaySeconds = alarm.dismissDelaySeconds,
+            delaySeconds = delaySeconds,
         )
         return FrameLayout(context).apply {
             setBackgroundColor(Color.BLACK)
@@ -162,7 +164,7 @@ class AlarmOverlayController(private val context: Context) {
                 CircularDismissView(
                     context = context,
                     ringStartedAtMillis = session.ringStartedAtMillis,
-                    delaySeconds = alarm.dismissDelaySeconds,
+                    delaySeconds = delaySeconds,
                 ),
                 FrameLayout.LayoutParams(dp(80), dp(80)).apply {
                     gravity = Gravity.TOP or Gravity.END
@@ -170,24 +172,10 @@ class AlarmOverlayController(private val context: Context) {
                     marginEnd = dp(20)
                 },
             )
-            if (session.snoozeCount == 0) {
-                addView(
-                    createSnoozeControl(alarm, session, unlockAtMillis),
-                    FrameLayout.LayoutParams(dp(132), dp(56)).apply {
-                        gravity = Gravity.BOTTOM or Gravity.START
-                        bottomMargin = dp(24)
-                        marginStart = dp(24)
-                    },
-                )
-            }
-            addView(
-                createCloseButton(alarm, session, unlockAtMillis),
-                FrameLayout.LayoutParams(dp(132), dp(56)).apply {
-                    gravity = Gravity.BOTTOM or Gravity.END
-                    bottomMargin = dp(24)
-                    marginEnd = dp(24)
-                },
-            )
+            // The swipe surface occupies the space above the action row. It
+            // is also added before the row so the explicit buttons remain
+            // the topmost touch targets if the bounds ever approach each
+            // other on a small or resized display.
             addView(
                 AlarmDismissGestureView(
                     context = context,
@@ -197,7 +185,64 @@ class AlarmOverlayController(private val context: Context) {
                 },
                 FrameLayout.LayoutParams(dp(280), dp(180)).apply {
                     gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                    bottomMargin = dp(8)
+                    bottomMargin = dp(ACTION_ROW_HEIGHT_DP + ACTION_ROW_BOTTOM_MARGIN_DP + ACTION_GESTURE_GAP_DP)
+                },
+            )
+            addView(
+                createActionRow(alarm, session, unlockAtMillis),
+                FrameLayout.LayoutParams(MATCH_PARENT, dp(ACTION_ROW_HEIGHT_DP)).apply {
+                    gravity = Gravity.BOTTOM or Gravity.END
+                    bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP)
+                },
+            )
+        }
+    }
+
+    /**
+     * Keeps the two explicit actions in one centered row. The outer view is
+     * full width with horizontal padding so the row remains inside the
+     * display on narrow, wide, and resized/folded layouts; the actual
+     * buttons stay compact and balanced instead of stretching across a
+     * tablet-sized overlay.
+     */
+    private fun createActionRow(
+        alarm: AlarmSpec,
+        session: AlarmSession,
+        unlockAtMillis: Long,
+    ): View {
+        val hasSnooze = session.state == AlarmSessionState.FIRING && session.snoozeCount >= 0
+        val buttonCount = if (hasSnooze) 2 else 1
+        val gap = if (hasSnooze) dp(ACTION_BUTTON_GAP_DP) else 0
+        val horizontalPadding = dp(ACTION_ROW_HORIZONTAL_PADDING_DP)
+        val availableWidth = (
+            context.resources.displayMetrics.widthPixels - (horizontalPadding * 2) - gap
+            ).coerceAtLeast(dp(1))
+        val buttonWidth = minOf(
+            dp(ACTION_BUTTON_MAX_WIDTH_DP),
+            (availableWidth / buttonCount).coerceAtLeast(dp(1)),
+        )
+
+        return FrameLayout(context).apply {
+            setPadding(horizontalPadding, 0, horizontalPadding, 0)
+            addView(
+                LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER
+                    if (hasSnooze) {
+                        addView(
+                            createSnoozeControl(alarm, session, unlockAtMillis),
+                            LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT).apply {
+                                marginEnd = gap
+                            },
+                        )
+                    }
+                    addView(
+                        createCloseButton(alarm, session, unlockAtMillis),
+                        LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
+                    )
+                },
+                FrameLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT).apply {
+                    gravity = Gravity.CENTER
                 },
             )
         }
@@ -244,7 +289,12 @@ class AlarmOverlayController(private val context: Context) {
         activeDescription = "5분 스누즈",
         action = {
             context.startService(
-                AlarmPlaybackService.snoozeIntent(context, alarm.id, session.sessionId),
+                AlarmPlaybackService.snoozeIntent(
+                    context = context,
+                    alarmId = alarm.id,
+                    sessionId = session.sessionId,
+                    expectedSnoozeCount = session.snoozeCount,
+                ),
             )
         },
     ).apply {
@@ -330,6 +380,12 @@ class AlarmOverlayController(private val context: Context) {
     private companion object {
         const val MATCH_PARENT = WindowManager.LayoutParams.MATCH_PARENT
         const val WRAP_CONTENT = WindowManager.LayoutParams.WRAP_CONTENT
+        const val ACTION_ROW_HEIGHT_DP = 56
+        const val ACTION_ROW_BOTTOM_MARGIN_DP = 24
+        const val ACTION_ROW_HORIZONTAL_PADDING_DP = 24
+        const val ACTION_GESTURE_GAP_DP = 16
+        const val ACTION_BUTTON_GAP_DP = 8
+        const val ACTION_BUTTON_MAX_WIDTH_DP = 132
         const val SENSOR_UNLOCK_FALLBACK_MILLIS = 3_000L
     }
 }
