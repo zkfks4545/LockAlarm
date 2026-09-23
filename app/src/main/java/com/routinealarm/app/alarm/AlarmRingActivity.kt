@@ -24,10 +24,14 @@ import com.routinealarm.app.youtube.YouTubeEmbed
 class AlarmRingActivity : ComponentActivity() {
     private lateinit var surfaceController: AlarmOverlayController
     private var surfaceView: View? = null
+    private var displayedSessionId: String? = null
     private val sensorUnlock = Runnable { enableSensorRotation() }
     private val finishReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            finishAndRemoveTask()
+            val requestedSessionId = intent?.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID)
+            if (requestedSessionId != null && requestedSessionId == displayedSessionId) {
+                finishAndRemoveTask()
+            }
         }
     }
 
@@ -47,26 +51,19 @@ class AlarmRingActivity : ComponentActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
 
+        // The persisted service session is authoritative. A stale full-screen
+        // intent can arrive after a newer alarm has already preempted it; in
+        // that case show the current session instead of closing the new alarm.
         val activeSession = AlarmSessionStore(this).load()
-        val alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1)
-            .takeIf { it > 0 }
-            ?: activeSession?.alarmId
-        val sessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID)
-            ?: activeSession?.sessionId
-        val alarm = alarmId?.let { AlarmRepository(this).load(it) }
-        if (
-            alarm == null ||
-            !alarm.enabled ||
-            sessionId == null ||
-            activeSession?.alarmId != alarm.id ||
-            activeSession.sessionId != sessionId ||
-            activeSession.state != AlarmSessionState.FIRING
-        ) {
+            ?.takeIf { it.state == AlarmSessionState.FIRING }
+        val alarm = activeSession?.let { AlarmRepository(this).load(it.alarmId) }
+        if (alarm == null || !alarm.enabled) {
             finish()
             return
         }
 
         surfaceController = AlarmOverlayController(this)
+        displayedSessionId = activeSession.sessionId
         showAlarmSurface(alarm, activeSession)
     }
 
@@ -122,6 +119,7 @@ class AlarmRingActivity : ComponentActivity() {
 
     private fun showAlarmSurface(alarm: AlarmSpec, session: AlarmSession) {
         window.decorView.removeCallbacks(sensorUnlock)
+        displayedSessionId = session.sessionId
         applyInitialPlaybackOrientation(alarm)
         val previous = surfaceView
         val next = surfaceController.createSurfaceView(
@@ -165,14 +163,12 @@ class AlarmRingActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val incomingSessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID)
+        // Ignore the incoming identity when it differs from the current
+        // persisted session. It may be an old start intent delivered after a
+        // newer alarm took ownership of the single alarm surface.
         val activeSession = AlarmSessionStore(this).load()
-        val alarm = activeSession
-            ?.takeIf { session ->
-                session.state == AlarmSessionState.FIRING &&
-                    (incomingSessionId == null || session.sessionId == incomingSessionId)
-            }
-            ?.let { session -> AlarmRepository(this).load(session.alarmId) }
+            ?.takeIf { it.state == AlarmSessionState.FIRING }
+        val alarm = activeSession?.let { session -> AlarmRepository(this).load(session.alarmId) }
         if (activeSession != null && alarm != null && alarm.enabled) {
             showAlarmSurface(alarm, activeSession)
             return
@@ -184,7 +180,9 @@ class AlarmRingActivity : ComponentActivity() {
         private const val ACTION_FINISH_RING = "com.routinealarm.app.action.FINISH_RING"
         private const val SENSOR_UNLOCK_FALLBACK_MILLIS = 3_000L
 
-        fun finishIntent(context: Context): Intent = Intent(ACTION_FINISH_RING)
-            .setPackage(context.packageName)
+        fun finishIntent(context: Context, sessionId: String): Intent =
+            Intent(ACTION_FINISH_RING)
+                .setPackage(context.packageName)
+                .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
     }
 }
