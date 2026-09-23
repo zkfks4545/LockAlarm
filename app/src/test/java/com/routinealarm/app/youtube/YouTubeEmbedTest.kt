@@ -61,7 +61,7 @@ class YouTubeEmbedTest {
     }
 
     @Test
-    fun generatedPlayerUsesAutoplayControlsAndLoop() {
+    fun generatedPlayerAutoplaysWithoutYouTubeControlsAndLoops() {
         val html = requireNotNull(
             YouTubeEmbed.playerHtml(
                 "https://youtu.be/dQw4w9WgXcQ",
@@ -69,7 +69,11 @@ class YouTubeEmbedTest {
             ),
         )
         assertTrue(html.contains("autoplay:1"))
-        assertTrue(html.contains("controls:1"))
+        assertTrue(html.contains("controls:0"))
+        assertTrue(html.contains("disablekb:1"))
+        assertTrue(html.contains("fs:0"))
+        assertTrue(html.contains("#player iframe{pointer-events:none}"))
+        assertFalse(html.contains("controls:1"))
         assertTrue(html.contains("loop:1"))
         assertTrue(html.contains("origin:'https://com.example.alarm'"))
         assertTrue(html.contains("strict-origin-when-cross-origin"))

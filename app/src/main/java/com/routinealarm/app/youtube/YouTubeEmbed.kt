@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -106,6 +108,7 @@ object YouTubeEmbed {
               <meta name="referrer" content="strict-origin-when-cross-origin">
               <style>
                 html,body,#player{width:100%;height:100%;margin:0;background:#000;overflow:hidden}
+                #player iframe{pointer-events:none}
                 #message{box-sizing:border-box;display:none;width:100%;height:100%;padding:32px;
                   align-items:center;justify-content:center;text-align:center;color:#fff;
                   background:#111;font:600 18px/1.55 sans-serif;white-space:pre-line}
@@ -147,7 +150,7 @@ object YouTubeEmbed {
                     videoId:'$id',
                     width:'100%',height:'100%',
                     playerVars:{
-                      autoplay:1,controls:1,playsinline:1,rel:0,loop:1,playlist:'$id',
+                      autoplay:1,controls:0,disablekb:1,fs:0,playsinline:1,rel:0,loop:1,playlist:'$id',
                       origin:'$origin'
                     },
                     events:{
@@ -205,7 +208,12 @@ fun createYouTubeWebView(
     webView.settings.javaScriptEnabled = true
     webView.settings.domStorageEnabled = true
     webView.settings.mediaPlaybackRequiresUserGesture = false
+    webView.settings.setSupportZoom(false)
+    webView.settings.builtInZoomControls = false
+    webView.settings.displayZoomControls = false
     webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+    webView.isVerticalScrollBarEnabled = false
+    webView.isHorizontalScrollBarEnabled = false
     webView.webChromeClient = WebChromeClient()
     webView.webViewClient = WebViewClient()
     webView.addJavascriptInterface(
@@ -258,6 +266,16 @@ private class PlaybackJavascriptBridge(
 private class SessionYouTubeWebView(context: Context) : WebView(context) {
     private var playbackLease: AlarmPlaybackLease? = null
 
+    init {
+        // The YouTube surface is display-only. Alarm actions are provided by
+        // the native overlay, so never forward direct input to the iframe.
+        isClickable = false
+        isLongClickable = false
+        isFocusable = false
+        isFocusableInTouchMode = false
+        setOnLongClickListener { true }
+    }
+
     fun bindPlaybackLease(lease: AlarmPlaybackLease?) {
         playbackLease = lease
     }
@@ -274,6 +292,16 @@ private class SessionYouTubeWebView(context: Context) : WebView(context) {
         playbackLease?.release()
         playbackLease = null
     }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean = true
+
+    override fun onTouchEvent(event: MotionEvent): Boolean = true
+
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean = true
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean = true
+
+    override fun performClick(): Boolean = true
 
     override fun onDetachedFromWindow() {
         releasePlaybackLease()
