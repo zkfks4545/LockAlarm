@@ -56,4 +56,23 @@ class AlarmPlaybackPositionStoreTest {
         assertEquals(2_000L, replacement.positionMillis())
         assertFalse(replacement.positionMillis() == 9_000L)
     }
+
+    @Test
+    fun snoozeResetInvalidatesOldLeaseAndStartsNextCycleAtZero() {
+        var superseded = false
+        lateinit var oldLease: AlarmPlaybackLease
+        oldLease = AlarmPlaybackPositionStore.attach("session") {
+            superseded = true
+            oldLease.updatePosition(9_000L)
+        }
+        oldLease.updatePosition(4_321L)
+
+        AlarmPlaybackPositionStore.invalidateAndReset("session")
+
+        val nextCycle = AlarmPlaybackPositionStore.attach("session") { }
+        oldLease.updatePosition(8_765L)
+
+        assertTrue(superseded)
+        assertEquals(0L, nextCycle.positionMillis())
+    }
 }

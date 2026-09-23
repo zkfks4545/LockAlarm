@@ -3,6 +3,8 @@ package com.routinealarm.app.ui
 import android.content.Context
 import android.graphics.Color
 import android.graphics.ImageDecoder
+import android.graphics.Matrix
+import android.graphics.SurfaceTexture
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
@@ -12,6 +14,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.Surface
+import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -25,8 +29,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.routinealarm.app.model.VisualKind
 import com.routinealarm.app.alarm.AlarmPlaybackLease
 import com.routinealarm.app.alarm.AlarmPlaybackPositionStore
-import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Composable
@@ -79,6 +83,13 @@ fun createAlarmVisualView(
     return when (visualKind) {
         VisualKind.VIDEO -> if (!playVideo) {
             createVideoPosterView(context, uri, cropToFill)
+        } else if (playbackSessionId == null) {
+            createPreviewVideoView(
+                context = context,
+                uri = uri,
+                cropToFill = cropToFill,
+                onPlaybackReady = onPlaybackReady,
+            )
         } else {
             createPlayingVideoView(
                 context = context,
@@ -195,6 +206,193 @@ private fun createPlayingVideoView(
             onPlaybackReady?.invoke()
             true
         }
+    }
+}
+
+/**
+ * Home/editor previews use TextureView instead of VideoView's SurfaceView.
+ * The view stays exactly the size of its card; only the texture content is
+ * center-cropped, so adjacent cards cannot receive an enlarged surface.
+ */
+private fun createPreviewVideoView(
+    context: Context,
+    uri: Uri,
+    cropToFill: Boolean,
+    onPlaybackReady: (() -> Unit)?,
+): View {
+    val poster = createVideoPosterView(context, uri, cropToFill)
+    val video = runCatching {
+        PreviewTextureVideoView(
+            context = context,
+            uri = uri,
+            cropToFill = cropToFill,
+            sourceSize = readVideoDisplaySize(context, uri),
+            poster = poster,
+            onPlaybackReady = onPlaybackReady,
+        )
+    }.getOrNull()
+
+    if (video == null) {
+        poster.post { onPlaybackReady?.invoke() }
+        return poster
+    }
+
+    return FrameLayout(context).apply {
+        setBackgroundColor(Color.BLACK)
+        clipChildren = true
+        clipToPadding = true
+        addView(
+            poster,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Gravity.CENTER,
+            ),
+        )
+        addView(
+            video,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Gravity.CENTER,
+            ),
+        )
+    }
+}
+
+private class PreviewTextureVideoView(
+    context: Context,
+    private val uri: Uri,
+    private val cropToFill: Boolean,
+    private var sourceSize: VideoDisplaySize?,
+    private val poster: View,
+    private val onPlaybackReady: (() -> Unit)?,
+) : TextureView(context), TextureView.SurfaceTextureListener {
+    private var player: MediaPlayer? = null
+    private var outputSurface: Surface? = null
+    private var playerGeneration = 0L
+
+    init {
+        isOpaque = false
+        surfaceTextureListener = this
+    }
+
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+        updateTextureTransform(width, height)
+        startPlayer(surface)
+    }
+
+    override fun onSurfaceTextureSizeChanged(
+        surface: SurfaceTexture,
+        width: Int,
+        height: Int,
+    ) {
+        updateTextureTransform(width, height)
+    }
+
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        releasePlayer()
+        poster.visibility = VISIBLE
+        return true
+    }
+
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = Unit
+
+    override fun onDetachedFromWindow() {
+        surfaceTextureListener = null
+        releasePlayer()
+        super.onDetachedFromWindow()
+    }
+
+    private fun startPlayer(surfaceTexture: SurfaceTexture) {
+        releasePlayer()
+        val generation = ++playerGeneration
+        val surface = Surface(surfaceTexture)
+        outputSurface = surface
+        val candidate = runCatching {
+            MediaPlayer().apply {
+                setDataSource(context, uri)
+                setSurface(surface)
+                isLooping = true
+                setVolume(0f, 0f)
+            }
+        }.getOrNull()
+
+        if (candidate == null) {
+            releasePlayer()
+            poster.visibility = VISIBLE
+            onPlaybackReady?.invoke()
+            return
+        }
+
+        player = candidate
+        candidate.setOnPreparedListener { prepared ->
+            if (generation != playerGeneration || player !== candidate) {
+                runCatching { prepared.release() }
+                return@setOnPreparedListener
+            }
+            if (sourceSize == null && prepared.videoWidth > 0 && prepared.videoHeight > 0) {
+                sourceSize = VideoDisplaySize(prepared.videoWidth, prepared.videoHeight)
+            }
+            updateTextureTransform(width, height)
+            runCatching {
+                prepared.isLooping = true
+                prepared.setVolume(0f, 0f)
+                prepared.start()
+                poster.visibility = GONE
+                onPlaybackReady?.invoke()
+            }.onFailure {
+                handlePlaybackFailure(generation)
+            }
+        }
+        candidate.setOnErrorListener { _, _, _ ->
+            if (generation == playerGeneration && player === candidate) {
+                handlePlaybackFailure(generation)
+                true
+            } else {
+                false
+            }
+        }
+        runCatching { candidate.prepareAsync() }
+            .onFailure { handlePlaybackFailure(generation) }
+    }
+
+    private fun handlePlaybackFailure(generation: Long) {
+        if (generation != playerGeneration) return
+        releasePlayer()
+        poster.visibility = VISIBLE
+        onPlaybackReady?.invoke()
+    }
+
+    private fun updateTextureTransform(viewWidth: Int, viewHeight: Int) {
+        val size = sourceSize
+        if (viewWidth <= 0 || viewHeight <= 0 || size == null) {
+            setTransform(Matrix())
+            return
+        }
+        val widthScale = viewWidth.toFloat() / size.width.toFloat()
+        val heightScale = viewHeight.toFloat() / size.height.toFloat()
+        val scale = if (cropToFill) {
+            max(widthScale, heightScale)
+        } else {
+            min(widthScale, heightScale)
+        }
+        setTransform(Matrix().apply {
+            setScale(scale, scale, viewWidth / 2f, viewHeight / 2f)
+        })
+    }
+
+    private fun releasePlayer() {
+        playerGeneration += 1L
+        player?.runCatching {
+            setOnPreparedListener(null)
+            setOnErrorListener(null)
+            stop()
+            release()
+        }
+        player = null
+        outputSurface?.runCatching { release() }
+        outputSurface = null
     }
 }
 

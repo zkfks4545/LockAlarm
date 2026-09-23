@@ -60,6 +60,23 @@ object AlarmPlaybackPositionStore {
         states.remove(sessionId)
     }
 
+    /**
+     * Ends the current media surface hand-off before a snooze re-ring.
+     *
+     * The superseded callback is deliberately invoked after ownership is
+     * invalidated. A detached old surface may still report one final
+     * position, but its lease can no longer repopulate the next playback
+     * cycle. The callback still gets a chance to pause the old player.
+     */
+    @Synchronized
+    fun invalidateAndReset(sessionId: String) {
+        val state = states.remove(sessionId) ?: return
+        val onSuperseded = state.onSuperseded
+        state.ownerToken = null
+        state.onSuperseded = null
+        onSuperseded?.invoke()
+    }
+
     @Synchronized
     fun clearAll() {
         states.clear()
