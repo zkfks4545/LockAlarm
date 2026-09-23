@@ -13,6 +13,7 @@ data class AlarmEntity(
     val repeatType: String,
     val localTimeMinutes: Int,
     val oneTimeDateEpochDay: Long?,
+    @ColumnInfo(defaultValue = "0") val oneTimeDateUserSelected: Boolean,
     val weekdaysCsv: String,
     val includeDatesCsv: String,
     val excludeDatesCsv: String,

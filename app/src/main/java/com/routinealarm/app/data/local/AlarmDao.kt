@@ -131,14 +131,23 @@ interface AlarmDao {
             return OccurrenceClaim(OccurrenceClaimDisposition.DUPLICATE, it)
         }
 
+        // WAITING belongs to the removed FIFO policy. Clear any rows left by
+        // an older build before claiming the new-alarm-first occurrence so a
+        // later service restart cannot revive them.
+        cancelWaitingOccurrences()
         val active = findActiveOccurrence()
         val disposition = AlarmOverlapPolicy.disposition(active?.status)
-        if (disposition == OccurrenceClaimDisposition.PREEMPT_SNOOZE_AND_START && active != null) {
-            transitionOccurrence(
-                active.occurrenceId,
-                active.sessionId,
-                AlarmOccurrenceStatus.SNOOZED,
-                AlarmOccurrenceStatus.PREEMPTED,
+        if (disposition == OccurrenceClaimDisposition.PREEMPT_ACTIVE_AND_START && active != null) {
+            transitionOccurrenceFromAny(
+                occurrenceId = active.occurrenceId,
+                sessionId = active.sessionId,
+                expectedStatuses = listOf(
+                    AlarmOccurrenceStatus.CLAIMED,
+                    AlarmOccurrenceStatus.FIRING,
+                    AlarmOccurrenceStatus.SNOOZED,
+                    AlarmOccurrenceStatus.SNOOZE_CLAIMED,
+                ),
+                newStatus = AlarmOccurrenceStatus.PREEMPTED,
             )
         }
         val occurrence = AlarmOccurrenceEntity(
@@ -148,11 +157,7 @@ interface AlarmDao {
             sessionId = sessionId,
             scheduledAtMillis = scheduledAtMillis,
             claimedAtMillis = claimedAtMillis,
-            status = if (disposition == OccurrenceClaimDisposition.WAIT) {
-                AlarmOccurrenceStatus.WAITING
-            } else {
-                AlarmOccurrenceStatus.CLAIMED
-            },
+            status = AlarmOccurrenceStatus.CLAIMED,
         )
         if (insertOccurrence(occurrence) == -1L) {
             return OccurrenceClaim(
@@ -162,6 +167,12 @@ interface AlarmDao {
         }
         return OccurrenceClaim(disposition, occurrence, active)
     }
+
+    @Query(
+        "UPDATE alarm_occurrences SET status = 'CANCELLED' " +
+            "WHERE status = 'WAITING'",
+    )
+    suspend fun cancelWaitingOccurrences(): Int
 
     @Transaction
     suspend fun claimSnoozeOccurrence(
@@ -201,31 +212,9 @@ interface AlarmDao {
 
     @Transaction
     suspend fun claimNextWaitingOccurrence(): AlarmOccurrenceEntity? {
-        if (findActiveOccurrence() != null) return null
-        for (waiting in waitingOccurrences()) {
-            val alarm = findAlarm(waiting.alarmId)
-            val isValid = alarm != null && alarm.enabled &&
-                alarm.scheduleRevision == waiting.scheduleRevision
-            if (!isValid) {
-                transitionOccurrence(
-                    waiting.occurrenceId,
-                    waiting.sessionId,
-                    AlarmOccurrenceStatus.WAITING,
-                    AlarmOccurrenceStatus.CANCELLED,
-                )
-                continue
-            }
-            if (
-                transitionOccurrence(
-                    waiting.occurrenceId,
-                    waiting.sessionId,
-                    AlarmOccurrenceStatus.WAITING,
-                    AlarmOccurrenceStatus.CLAIMED,
-                ) == 1
-            ) {
-                return waiting.copy(status = AlarmOccurrenceStatus.CLAIMED)
-            }
-        }
+        // FIFO waiting was removed in 0.15.8. Cancel legacy rows defensively
+        // so no caller can revive an occurrence created by an older build.
+        cancelWaitingOccurrences()
         return null
     }
 

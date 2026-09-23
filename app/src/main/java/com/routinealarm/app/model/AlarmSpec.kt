@@ -8,11 +8,14 @@ data class AlarmSpec(
     val repeatType: RepeatType = RepeatType.ONE_TIME,
     val localTimeMinutes: Int = 7 * 60,
     val oneTimeDateEpochDay: Long? = null,
+    /** Whether the one-time date was explicitly chosen by the user. */
+    val oneTimeDateUserSelected: Boolean = false,
     val weekdays: Set<Int> = emptySet(),
     val includeDatesEpochDay: Set<Long> = emptySet(),
     val excludeDatesEpochDay: Set<Long> = emptySet(),
     val brightnessPercent: Int = 80,
     val mediaVolumePercent: Int = 70,
+    /** Delay in seconds; the editor and runtime clamp it to the selected media duration. */
     val dismissDelaySeconds: Int = 5,
     /** Whether the dismiss lock timer is enabled. A zero delay is still valid when enabled. */
     val dismissTimerEnabled: Boolean = true,
@@ -35,6 +38,7 @@ data class AlarmSpec(
 enum class RepeatType {
     ONE_TIME,
     WEEKLY,
+    DAILY,
 }
 
 enum class RestorePolicy {
