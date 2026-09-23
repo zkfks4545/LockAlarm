@@ -112,9 +112,14 @@ class AlarmSessionStore(private val context: Context) {
         return true
     }
 
-    fun resumeSnoozed(alarmId: Int, nowMillis: Long): Boolean {
+    fun resumeSnoozed(
+        ticket: SnoozeDeliveryTicket,
+        clock: SnoozeDeliveryClock,
+    ): Boolean {
         val session = load() ?: return false
-        if (session.alarmId != alarmId || session.state != AlarmSessionState.SNOOZED) return false
+        if (!SnoozeDeliveryValidation.acceptsPendingSession(session, ticket, clock)) {
+            return false
+        }
         val nextState = AlarmSessionStateMachine.nextState(
             currentState = session.state,
             snoozeCount = session.snoozeCount,
@@ -122,7 +127,7 @@ class AlarmSessionStore(private val context: Context) {
         ) ?: return false
         begin(
             session.copy(
-                ringStartedAtMillis = nowMillis,
+                ringStartedAtMillis = clock.nowWallMillis,
                 snoozeDueAtMillis = null,
                 snoozeDueAtElapsedRealtime = null,
                 snoozeBootCount = null,

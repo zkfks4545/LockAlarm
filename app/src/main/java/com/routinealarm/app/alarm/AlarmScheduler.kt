@@ -73,6 +73,7 @@ class AlarmScheduler(private val context: Context) {
                 scheduleRevision = session.scheduleRevision,
                 occurrenceId = session.occurrenceId,
                 sessionId = session.sessionId,
+                snoozeCount = session.snoozeCount,
             ),
         )
     }
@@ -91,7 +92,7 @@ class AlarmScheduler(private val context: Context) {
     }
 
     fun scheduleNextAfterDelivery(alarm: AlarmSpec, deliveredTriggerAt: Long) {
-        if (alarm.repeatType != RepeatType.WEEKLY) return
+        if (alarm.repeatType == RepeatType.ONE_TIME) return
         val repository = AlarmRepository(context)
         val next = AlarmScheduleResolver.nextTriggerAtMillis(alarm, deliveredTriggerAt + 1_000L) ?: return
         val updated = repository.advanceTriggerAfterDelivery(
@@ -100,6 +101,37 @@ class AlarmScheduler(private val context: Context) {
             deliveredTriggerAtMillis = deliveredTriggerAt,
             nextTriggerAtMillis = next,
         ) ?: return
+        if (canScheduleExactAlarms()) schedule(updated)
+    }
+
+    /**
+     * Re-checks the next repeat occurrence when a ringing session is
+     * dismissed. This is a second line of defense for recovery/manual
+     * delivery paths where the regular delivery advance may not have been
+     * committed before the service handled the dismissal.
+     */
+    fun scheduleNextAfterDismissal(
+        alarmId: Int,
+        dismissedAtMillis: Long = System.currentTimeMillis(),
+    ) {
+        val repository = AlarmRepository(context)
+        val stored = repository.load(alarmId) ?: return
+        if (!stored.enabled || stored.repeatType == RepeatType.ONE_TIME) return
+
+        val next = AlarmScheduleResolver.nextTriggerAfterDismissal(
+            alarm = stored,
+            dismissedAtMillis = maxOf(dismissedAtMillis, System.currentTimeMillis()),
+        ) ?: return
+        val updated = if (stored.triggerAtMillis == next) {
+            stored
+        } else {
+            repository.advanceTriggerAfterDelivery(
+                alarmId = stored.id,
+                scheduleRevision = stored.scheduleRevision,
+                deliveredTriggerAtMillis = stored.triggerAtMillis,
+                nextTriggerAtMillis = next,
+            ) ?: return
+        }
         if (canScheduleExactAlarms()) schedule(updated)
     }
 
@@ -119,7 +151,11 @@ class AlarmScheduler(private val context: Context) {
         }
         if (session?.state == AlarmSessionState.SNOOZED) {
             val nowWall = System.currentTimeMillis()
-            val sameBoot = session.snoozeBootCount == sessionStore.currentBootCount()
+            val currentBootCount = sessionStore.currentBootCount()
+            val sameBoot = session.snoozeBootCount != null &&
+                session.snoozeBootCount >= 0 &&
+                currentBootCount >= 0 &&
+                session.snoozeBootCount == currentBootCount
             val dueAtElapsed = session.snoozeDueAtElapsedRealtime
             val effectiveDueAt = if (sameBoot && dueAtElapsed != null) {
                 SnoozePolicy.reanchoredWallDueAt(
@@ -131,6 +167,13 @@ class AlarmScheduler(private val context: Context) {
                 session.snoozeDueAtMillis
             }
             if (effectiveDueAt != null && effectiveDueAt > nowWall) {
+                // A process restart or clock change may have interrupted a
+                // previous Room claim before the service resumed. Release it
+                // before installing the current ticket again.
+                repository.restoreSnoozeClaim(
+                    session.occurrenceId,
+                    session.sessionId,
+                )
                 sessionStore.updateSnoozeWallDueAt(effectiveDueAt)
                 val notificationFactory = AlarmNotificationFactory(context)
                 notificationFactory.createChannel()
@@ -182,8 +225,14 @@ class AlarmScheduler(private val context: Context) {
             ) {
                 return@forEach
             }
-            val alarm = if (stored.triggerAtMillis <= System.currentTimeMillis()) {
-                val next = AlarmScheduleResolver.nextTriggerAtMillis(stored)
+            val nowMillis = System.currentTimeMillis()
+            val shouldRecalculate =
+                stored.repeatType != RepeatType.ONE_TIME || stored.triggerAtMillis <= nowMillis
+            val alarm = if (shouldRecalculate) {
+                val next = AlarmScheduleResolver.nextTriggerAtMillis(
+                    alarm = stored,
+                    nowMillis = nowMillis,
+                )
                 if (next == null) {
                     repository.disable(stored.id)
                     return@forEach
@@ -205,6 +254,7 @@ class AlarmScheduler(private val context: Context) {
         scheduleRevision: Long = 0L,
         occurrenceId: String = "",
         sessionId: String = "",
+        snoozeCount: Int = SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
     ): PendingIntent = PendingIntent.getBroadcast(
         context,
         alarmId + if (kind == AlarmOccurrenceKind.SNOOZE) SNOOZE_REQUEST_OFFSET else 0,
@@ -214,7 +264,8 @@ class AlarmScheduler(private val context: Context) {
             .putExtra(EXTRA_TRIGGER_AT, triggerAtMillis)
             .putExtra(EXTRA_SCHEDULE_REVISION, scheduleRevision)
             .putExtra(EXTRA_OCCURRENCE_ID, occurrenceId)
-            .putExtra(EXTRA_SESSION_ID, sessionId),
+            .putExtra(EXTRA_SESSION_ID, sessionId)
+            .putExtra(EXTRA_SNOOZE_COUNT, snoozeCount),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
@@ -249,6 +300,7 @@ class AlarmScheduler(private val context: Context) {
         const val EXTRA_SCHEDULE_REVISION = "schedule_revision"
         const val EXTRA_OCCURRENCE_ID = "occurrence_id"
         const val EXTRA_SESSION_ID = "session_id"
+        const val EXTRA_SNOOZE_COUNT = "snooze_count"
         private const val SHOW_REQUEST_OFFSET = 20_000
         private const val SNOOZE_REQUEST_OFFSET = 40_000
         private const val SNOOZE_SHOW_REQUEST_OFFSET = 60_000

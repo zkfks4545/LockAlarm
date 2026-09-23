@@ -30,6 +30,9 @@ data class AlarmOccurrenceEntity(
 enum class OccurrenceClaimDisposition {
     START,
     WAIT,
+    PREEMPT_ACTIVE_AND_START,
+    /** @deprecated Kept only for binary/source compatibility with older callers. */
+    @Deprecated("Use PREEMPT_ACTIVE_AND_START")
     PREEMPT_SNOOZE_AND_START,
     DUPLICATE,
     STALE,

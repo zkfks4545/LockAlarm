@@ -2,6 +2,7 @@ package com.routinealarm.app.alarm
 
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.routinealarm.app.data.AlarmRepository
 import com.routinealarm.app.data.local.OccurrenceClaimDisposition
@@ -30,19 +31,66 @@ object AlarmDeliveryCoordinator {
             ?.let { stored -> AlarmOccurrenceKind.entries.firstOrNull { it.name == stored } }
             ?: AlarmOccurrenceKind.REGULAR
         val repository = AlarmRepository(context)
+        val sessionStore = AlarmSessionStore(context)
         val alarm = repository.load(requestedId)
             ?: return AlarmDeliveryOutcome(AlarmDeliveryState.IGNORED)
         if (!alarm.enabled || occurrenceId.isBlank() || sessionId.isBlank()) {
             return AlarmDeliveryOutcome(AlarmDeliveryState.IGNORED)
         }
-        AlarmSessionStore(context).load()?.let { activeSession ->
+        val requestedSnoozeCount = intent.getIntExtra(
+            AlarmScheduler.EXTRA_SNOOZE_COUNT,
+            SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+        )
+        val snoozeTicket = if (occurrenceKind == AlarmOccurrenceKind.SNOOZE) {
+            SnoozeDeliveryTicket(
+                alarmId = requestedId,
+                occurrenceId = occurrenceId,
+                scheduleRevision = requestedRevision,
+                sessionId = sessionId,
+                snoozeCount = requestedSnoozeCount,
+                dueAtMillis = requestedTriggerAt,
+            )
+        } else {
+            null
+        }
+        val activeSession = sessionStore.load()
+        if (occurrenceKind == AlarmOccurrenceKind.SNOOZE) {
+            val clock = SnoozeDeliveryClock(
+                nowWallMillis = System.currentTimeMillis(),
+                nowElapsedRealtime = SystemClock.elapsedRealtime(),
+                currentBootCount = sessionStore.currentBootCount(),
+            )
+            val valid = snoozeTicket?.let {
+                SnoozeDeliveryValidation.acceptsPendingSession(
+                    session = activeSession,
+                    ticket = it,
+                    clock = clock,
+                )
+            } == true
+            if (!valid) {
+                // AlarmManager can deliver an exact alarm early after a wall
+                // clock jump. Keep the current reservation alive and project
+                // its remaining elapsed time back onto a new wall deadline.
+                if (
+                    snoozeTicket != null &&
+                        SnoozeDeliveryValidation.matchesPendingReservation(
+                            activeSession,
+                            snoozeTicket,
+                        )
+                ) {
+                    AlarmScheduler(context).rescheduleStoredAlarm("EARLY_SNOOZE_DELIVERY")
+                }
+                return AlarmDeliveryOutcome(AlarmDeliveryState.IGNORED)
+            }
+        }
+        activeSession?.let { session ->
             repository.ensureSessionOccurrence(
-                occurrenceId = activeSession.occurrenceId,
-                alarmId = activeSession.alarmId,
-                scheduleRevision = activeSession.scheduleRevision,
-                sessionId = activeSession.sessionId,
-                scheduledAtMillis = activeSession.startedAtMillis,
-                snoozed = activeSession.state == AlarmSessionState.SNOOZED,
+                occurrenceId = session.occurrenceId,
+                alarmId = session.alarmId,
+                scheduleRevision = session.scheduleRevision,
+                sessionId = session.sessionId,
+                scheduledAtMillis = session.startedAtMillis,
+                snoozed = session.state == AlarmSessionState.SNOOZED,
             )
         }
         val claim = if (occurrenceKind == AlarmOccurrenceKind.REGULAR) {
@@ -83,8 +131,7 @@ object AlarmDeliveryCoordinator {
                 occurrenceId = occurrenceId,
                 scheduleRevision = requestedRevision,
                 sessionId = sessionId,
-                preemptSnooze = claim.disposition ==
-                    OccurrenceClaimDisposition.PREEMPT_SNOOZE_AND_START,
+                snoozeTicket = snoozeTicket,
             ),
         )
         return AlarmDeliveryOutcome(AlarmDeliveryState.STARTED, alarm, sessionId)

@@ -109,6 +109,18 @@ class AlarmRepository(private val context: Context) {
         dao.claimSnoozeOccurrence(occurrenceId, alarmId, scheduleRevision, sessionId)
     }
 
+    fun restoreSnoozeClaim(
+        occurrenceId: String,
+        sessionId: String,
+    ): Boolean = io {
+        dao.transitionOccurrence(
+            occurrenceId,
+            sessionId,
+            AlarmOccurrenceStatus.SNOOZE_CLAIMED,
+            AlarmOccurrenceStatus.SNOOZED,
+        ) == 1
+    }
+
     fun markOccurrenceFiring(occurrenceId: String, sessionId: String): Boolean = io {
         dao.transitionOccurrenceFromAny(
             occurrenceId,
@@ -121,6 +133,12 @@ class AlarmRepository(private val context: Context) {
     fun occurrenceIsFiring(occurrenceId: String, sessionId: String): Boolean = io {
         dao.findOccurrence(occurrenceId)?.let {
             it.sessionId == sessionId && it.status == AlarmOccurrenceStatus.FIRING
+        } == true
+    }
+
+    fun occurrenceIsClaimed(occurrenceId: String, sessionId: String): Boolean = io {
+        dao.findOccurrence(occurrenceId)?.let {
+            it.sessionId == sessionId && it.status == AlarmOccurrenceStatus.CLAIMED
         } == true
     }
 
@@ -203,6 +221,10 @@ class AlarmRepository(private val context: Context) {
         dao.claimNextWaitingOccurrence()
     }
 
+    fun cancelWaitingOccurrences() = io {
+        dao.cancelWaitingOccurrences()
+    }
+
     fun setEnabled(alarmId: Int, enabled: Boolean) = io {
         dao.setEnabled(alarmId, enabled, System.currentTimeMillis())
     }
@@ -231,6 +253,10 @@ class AlarmRepository(private val context: Context) {
                     repeatType = RepeatType.ONE_TIME,
                     localTimeMinutes = local.hour * 60 + local.minute,
                     oneTimeDateEpochDay = local.toLocalDate().toEpochDay(),
+                    // The legacy editor had no date picker, so this date was
+                    // never explicitly selected by the user. Activation may
+                    // re-anchor it to today's time when appropriate.
+                    oneTimeDateUserSelected = false,
                     brightnessPercent = legacy.getInt(KEY_BRIGHTNESS, 80),
                     mediaVolumePercent = legacy.getInt(KEY_VOLUME, 70),
                     dismissDelaySeconds = legacy.getInt(KEY_DISMISS_DELAY, 5),
@@ -256,13 +282,14 @@ class AlarmRepository(private val context: Context) {
         repeatType = repeatType.name,
         localTimeMinutes = localTimeMinutes.coerceIn(0, 1439),
         oneTimeDateEpochDay = oneTimeDateEpochDay,
+        oneTimeDateUserSelected = oneTimeDateUserSelected,
         weekdaysCsv = weekdays.sorted().joinToString(","),
         includeDatesCsv = includeDatesEpochDay.sorted().joinToString(","),
         excludeDatesCsv = excludeDatesEpochDay.sorted().joinToString(","),
         brightnessPercent = brightnessPercent.coerceIn(0, 100),
         mediaVolumePercent = mediaVolumePercent.coerceIn(0, 100),
         dismissDelaySeconds = if (dismissTimerEnabled) {
-            dismissDelaySeconds.coerceIn(0, 60)
+            dismissDelaySeconds.coerceAtLeast(0)
         } else {
             0
         },
@@ -287,13 +314,14 @@ class AlarmRepository(private val context: Context) {
         repeatType = parseEnum(repeatType, RepeatType.ONE_TIME),
         localTimeMinutes = localTimeMinutes,
         oneTimeDateEpochDay = oneTimeDateEpochDay,
+        oneTimeDateUserSelected = oneTimeDateUserSelected,
         weekdays = weekdaysCsv.intSet(),
         includeDatesEpochDay = includeDatesCsv.longSet(),
         excludeDatesEpochDay = excludeDatesCsv.longSet(),
         brightnessPercent = brightnessPercent,
         mediaVolumePercent = mediaVolumePercent,
         dismissDelaySeconds = if (dismissTimerEnabled) {
-            dismissDelaySeconds.coerceIn(0, 60)
+            dismissDelaySeconds.coerceAtLeast(0)
         } else {
             0
         },
