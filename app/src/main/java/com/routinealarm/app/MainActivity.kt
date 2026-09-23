@@ -80,7 +80,9 @@ import com.routinealarm.app.alarm.AlarmPlaybackService
 import com.routinealarm.app.alarm.AlarmScheduleResolver
 import com.routinealarm.app.alarm.AlarmScheduler
 import com.routinealarm.app.alarm.AlarmSessionStore
+import com.routinealarm.app.alarm.DismissTimerPolicy
 import com.routinealarm.app.data.AlarmRepository
+import com.routinealarm.app.media.AlarmMediaDuration
 import com.routinealarm.app.media.DeviceMediaItem
 import com.routinealarm.app.media.MediaLibraryTab
 import com.routinealarm.app.media.requestedMediaPermissions
@@ -107,8 +109,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private var permissionState by mutableStateOf(PermissionState())
@@ -1590,6 +1594,37 @@ private fun AlarmEditorScreen(
 ) {
     BackHandler(onBack = onBack)
     val context = LocalContext.current
+    val mediaDurationResult by produceState<AlarmMediaDuration.LookupResult?>(
+        null,
+        alarm.contentMode,
+        alarm.visualUri,
+        alarm.visualKind,
+        alarm.audioUri,
+    ) {
+        value = withContext(Dispatchers.IO) {
+            AlarmMediaDuration.lookup(context, alarm)
+        }
+    }
+    val mediaDurationSeconds = mediaDurationResult?.maxDurationSeconds
+    val dismissDelayMaxSeconds = DismissTimerPolicy.maxDelaySeconds(mediaDurationSeconds)
+    val dismissDelaySeconds = if (mediaDurationResult == null) {
+        alarm.dismissDelaySeconds
+            .coerceAtLeast(0)
+            .coerceAtMost(DismissTimerPolicy.UNKNOWN_MEDIA_MAX_DELAY_SECONDS)
+    } else {
+        DismissTimerPolicy.clampDelaySeconds(alarm.dismissDelaySeconds, dismissDelayMaxSeconds)
+    }
+    LaunchedEffect(mediaDurationResult, alarm.dismissTimerEnabled) {
+        if (mediaDurationResult != null && alarm.dismissTimerEnabled) {
+            val clampedDelaySeconds = DismissTimerPolicy.clampDelaySeconds(
+                delaySeconds = alarm.dismissDelaySeconds,
+                maxDelaySeconds = dismissDelayMaxSeconds,
+            )
+            if (clampedDelaySeconds != alarm.dismissDelaySeconds) {
+                onAlarmChange(alarm.copy(dismissDelaySeconds = clampedDelaySeconds))
+            }
+        }
+    }
     var hourText by remember(alarm.id) {
         mutableStateOf((alarm.localTimeMinutes / 60).toString().padStart(2, '0'))
     }
@@ -1597,7 +1632,6 @@ private fun AlarmEditorScreen(
         mutableStateOf((alarm.localTimeMinutes % 60).toString().padStart(2, '0'))
     }
     var testDelayText by remember(alarm.id) { mutableStateOf("10") }
-    var scheduleNotice by remember(alarm.id) { mutableStateOf<String?>(null) }
     LaunchedEffect(alarm.localTimeMinutes) {
         val typedMinutes = hourText.toIntOrNull()?.let { hour ->
             minuteText.toIntOrNull()?.let { minute -> hour * 60 + minute }
@@ -1612,17 +1646,11 @@ private fun AlarmEditorScreen(
     val manualTimeValid = typedHour != null && typedHour in 0..23 &&
         typedMinute != null && typedMinute in 0..59
     val testDelaySeconds = testDelayText.toLongOrNull()?.takeIf { it in 1L..3_600L }
-    fun normalizeOneTime(candidate: AlarmSpec): AlarmSpec {
-        val normalized = AlarmScheduleResolver.rollPastOneTimeToTomorrow(candidate)
-        if (
-            candidate.repeatType == RepeatType.ONE_TIME &&
-            candidate.oneTimeDateEpochDay != normalized.oneTimeDateEpochDay
-        ) {
-            scheduleNotice = "오늘 이미 지난 시각이라 내일로 자동 변경했습니다."
-        }
-        return normalized
-    }
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1672,9 +1700,11 @@ private fun AlarmEditorScreen(
                                 val hour = next.toIntOrNull()
                                 val minute = minuteText.toIntOrNull()
                                 if (hour != null && hour in 0..23 && minute != null && minute in 0..59) {
-                                    onAlarmChange(
-                                        normalizeOneTime(alarm.copy(localTimeMinutes = hour * 60 + minute)),
-                                    )
+                                    // Do not roll the date while the user is still
+                                    // entering a multi-digit time. A transient
+                                    // one-digit value can look like a past time and
+                                    // otherwise leave the finished value on tomorrow.
+                                    onAlarmChange(alarm.copy(localTimeMinutes = hour * 60 + minute))
                                 }
                             },
                             label = { Text("시") },
@@ -1691,9 +1721,7 @@ private fun AlarmEditorScreen(
                                 val hour = hourText.toIntOrNull()
                                 val minute = next.toIntOrNull()
                                 if (hour != null && hour in 0..23 && minute != null && minute in 0..59) {
-                                    onAlarmChange(
-                                        normalizeOneTime(alarm.copy(localTimeMinutes = hour * 60 + minute)),
-                                    )
+                                    onAlarmChange(alarm.copy(localTimeMinutes = hour * 60 + minute))
                                 }
                             },
                             label = { Text("분") },
@@ -1712,9 +1740,7 @@ private fun AlarmEditorScreen(
                                 { _, hour, minute ->
                                     hourText = hour.toString().padStart(2, '0')
                                     minuteText = minute.toString().padStart(2, '0')
-                                    onAlarmChange(
-                                        normalizeOneTime(alarm.copy(localTimeMinutes = hour * 60 + minute)),
-                                    )
+                                    onAlarmChange(alarm.copy(localTimeMinutes = hour * 60 + minute))
                                 },
                                 alarm.localTimeMinutes / 60,
                                 alarm.localTimeMinutes % 60,
@@ -1728,14 +1754,21 @@ private fun AlarmEditorScreen(
                         FilterChip(
                             selected = alarm.repeatType == RepeatType.ONE_TIME,
                             onClick = {
+                                val returningFromRepeat = alarm.repeatType != RepeatType.ONE_TIME
                                 val candidate = alarm.copy(
                                     repeatType = RepeatType.ONE_TIME,
-                                    oneTimeDateEpochDay = alarm.oneTimeDateEpochDay
-                                        ?: LocalDate.now().toEpochDay(),
+                                    oneTimeDateEpochDay = if (returningFromRepeat) {
+                                        LocalDate.now().toEpochDay()
+                                    } else {
+                                        alarm.oneTimeDateEpochDay ?: LocalDate.now().toEpochDay()
+                                    },
+                                    oneTimeDateUserSelected = if (returningFromRepeat) {
+                                        false
+                                    } else {
+                                        alarm.oneTimeDateUserSelected
+                                    },
                                 )
-                                onAlarmChange(
-                                    normalizeOneTime(candidate),
-                                )
+                                onAlarmChange(candidate)
                             },
                             label = { Text("한 번") },
                         )
@@ -1751,7 +1784,19 @@ private fun AlarmEditorScreen(
                                     ),
                                 )
                             },
-                            label = { Text("매주") },
+                            label = { Text("요일별") },
+                        )
+                        FilterChip(
+                            selected = alarm.repeatType == RepeatType.DAILY,
+                            onClick = {
+                                onAlarmChange(
+                                    alarm.copy(
+                                        repeatType = RepeatType.DAILY,
+                                        weekdays = emptySet(),
+                                    ),
+                                )
+                            },
+                            label = { Text("매일") },
                         )
                     }
                     if (alarm.repeatType == RepeatType.ONE_TIME) {
@@ -1761,7 +1806,10 @@ private fun AlarmEditorScreen(
                             onClick = {
                                 showDatePicker(context, alarm.oneTimeDateEpochDay) { selected ->
                                     onAlarmChange(
-                                        normalizeOneTime(alarm.copy(oneTimeDateEpochDay = selected)),
+                                        alarm.copy(
+                                            oneTimeDateEpochDay = selected,
+                                            oneTimeDateUserSelected = true,
+                                        ),
                                     )
                                 }
                             },
@@ -1778,8 +1826,9 @@ private fun AlarmEditorScreen(
                                 modifier = Modifier.weight(1f),
                                 onClick = {
                                     onAlarmChange(
-                                        normalizeOneTime(
-                                            alarm.copy(oneTimeDateEpochDay = LocalDate.now().toEpochDay()),
+                                        alarm.copy(
+                                            oneTimeDateEpochDay = LocalDate.now().toEpochDay(),
+                                            oneTimeDateUserSelected = true,
                                         ),
                                     )
                                 },
@@ -1787,20 +1836,25 @@ private fun AlarmEditorScreen(
                             OutlinedButton(
                                 modifier = Modifier.weight(1f),
                                 onClick = {
-                                    scheduleNotice = null
                                     onAlarmChange(
                                         alarm.copy(
                                             oneTimeDateEpochDay = LocalDate.now().plusDays(1).toEpochDay(),
+                                            oneTimeDateUserSelected = true,
                                         ),
                                     )
                                 },
                             ) { Text("내일") }
                         }
-                        scheduleNotice?.let {
-                            Text(it, color = MaterialTheme.colorScheme.primary)
-                        }
                     } else {
-                        WeekdayPicker(alarm.weekdays) { onAlarmChange(alarm.copy(weekdays = it)) }
+                        if (alarm.repeatType == RepeatType.WEEKLY) {
+                            WeekdayPicker(alarm.weekdays) { onAlarmChange(alarm.copy(weekdays = it)) }
+                        } else {
+                            Text(
+                                "매일 반복합니다.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         ExceptionDates(
                             title = "추가 날짜",
                             dates = alarm.includeDatesEpochDay,
@@ -1874,10 +1928,14 @@ private fun AlarmEditorScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("화면 잠금 타이머")
                             Text(
-                                if (alarm.dismissTimerEnabled) {
-                                    "켜짐 · 0~60초 뒤 해제 버튼 활성화"
-                                } else {
-                                    "꺼짐 · 알람 시작 즉시 해제 가능"
+                                when {
+                                    !alarm.dismissTimerEnabled -> "꺼짐 · 알람 시작 즉시 해제 가능"
+                                    mediaDurationResult == null && AlarmMediaDuration.hasDurationCandidate(alarm) ->
+                                        "켜짐 · 미디어 길이 확인 중 (0초부터 설정 가능)"
+                                    mediaDurationSeconds != null ->
+                                        "켜짐 · 0~${formatDurationLabel(mediaDurationSeconds)} 뒤 해제 버튼 활성화"
+                                    else ->
+                                        "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (미디어 길이 확인 불가)"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -1889,7 +1947,14 @@ private fun AlarmEditorScreen(
                                     alarm.copy(
                                         dismissTimerEnabled = enabled,
                                         dismissDelaySeconds = if (enabled) {
-                                            alarm.dismissDelaySeconds.coerceIn(0, 60)
+                                            if (mediaDurationResult == null) {
+                                                alarm.dismissDelaySeconds.coerceAtLeast(0)
+                                            } else {
+                                                DismissTimerPolicy.clampDelaySeconds(
+                                                    alarm.dismissDelaySeconds,
+                                                    dismissDelayMaxSeconds,
+                                                )
+                                            }
                                         } else {
                                             0
                                         },
@@ -1899,8 +1964,20 @@ private fun AlarmEditorScreen(
                         )
                     }
                     if (alarm.dismissTimerEnabled) {
-                        ValueSlider("닫기 버튼 대기 시간", alarm.dismissDelaySeconds.coerceIn(0, 60), 0f..60f, "초") {
-                            onAlarmChange(alarm.copy(dismissDelaySeconds = it.coerceIn(0, 60)))
+                        ValueSlider(
+                            label = "닫기 버튼 대기 시간",
+                            value = dismissDelaySeconds,
+                            range = 0f..dismissDelayMaxSeconds.toFloat(),
+                            suffix = "초",
+                        ) {
+                            onAlarmChange(
+                                alarm.copy(
+                                    dismissDelaySeconds = DismissTimerPolicy.clampDelaySeconds(
+                                        delaySeconds = it,
+                                        maxDelaySeconds = dismissDelayMaxSeconds,
+                                    ),
+                                ),
+                            )
                         }
                     }
                     Row(
@@ -1908,8 +1985,8 @@ private fun AlarmEditorScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("해제 시 원래 값 복원")
-                            Text("끄면 사용자가 바꾼 현재 값을 유지합니다.", style = MaterialTheme.typography.bodySmall)
+                            Text("해제 시 밝기·음량 원래 값 복원")
+                            Text("끄면 알람 중 바뀐 현재 값을 유지합니다.", style = MaterialTheme.typography.bodySmall)
                         }
                         Switch(
                             checked = alarm.restorePolicy == RestorePolicy.RESTORE_PREVIOUS,
@@ -2364,10 +2441,14 @@ private fun ValueSlider(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.roundToInt()) },
             valueRange = range,
-            steps = (range.endInclusive - range.start - 1).roundToInt().coerceAtLeast(0),
+            steps = (range.endInclusive - range.start - 1)
+                .roundToInt()
+                .coerceIn(0, MAX_DISCRETE_SLIDER_STEPS),
         )
     }
 }
+
+private const val MAX_DISCRETE_SLIDER_STEPS = 3_600
 
 private data class SaveResult(val saved: AlarmSpec?, val message: String)
 
@@ -2380,6 +2461,7 @@ private fun saveAndMaybeSchedule(
     scheduler: AlarmScheduler,
 ): SaveResult {
     val shouldEnable = enable || alarm.enabled
+    val activationRequested = enable && !alarm.enabled && testDelayMillis == null
     if (shouldEnable && !permissions.exactAlarm) return SaveResult(null, "정확한 알람 접근을 허용해 주세요.")
     if (shouldEnable && !permissions.writeSettings) return SaveResult(null, "시스템 밝기 변경을 허용해 주세요.")
     if (shouldEnable && !permissions.fullScreenIntent) return SaveResult(null, "전체화면 알람 접근을 허용해 주세요.")
@@ -2394,23 +2476,36 @@ private fun saveAndMaybeSchedule(
     val automaticAlarm = alarm.copy(
         soundSource = automaticSoundSource(alarm.visualKind, alarm.visualUri, alarm.audioUri),
     )
-    val schedulingAlarm = if (testDelayMillis == null) {
-        AlarmScheduleResolver.rollPastOneTimeToTomorrow(automaticAlarm)
-    } else {
-        automaticAlarm
+    val schedulingAlarm = when {
+        testDelayMillis != null -> automaticAlarm
+        activationRequested -> AlarmScheduleResolver.prepareForActivation(automaticAlarm)
+        // Keep a disabled alarm's date exactly as entered. Its cached trigger
+        // may be in the past because it is not scheduled until activation.
+        else -> automaticAlarm
     }
-    val rolledToTomorrow = testDelayMillis == null &&
+    val tomorrowEpochDay = LocalDate.now().plusDays(1).toEpochDay()
+    val rolledToTomorrow = activationRequested &&
         alarm.repeatType == RepeatType.ONE_TIME &&
-        alarm.oneTimeDateEpochDay != schedulingAlarm.oneTimeDateEpochDay
+        schedulingAlarm.oneTimeDateEpochDay == tomorrowEpochDay &&
+        alarm.oneTimeDateEpochDay != tomorrowEpochDay
     val triggerAt = testDelayMillis?.let { System.currentTimeMillis() + it }
         ?: AlarmScheduleResolver.nextTriggerAtMillis(schedulingAlarm)
+        ?: if (!shouldEnable) schedulingAlarm.triggerAtMillis else null
         ?: return SaveResult(null, "미래의 알람 날짜와 시간을 선택해 주세요.")
     val normalized = schedulingAlarm.copy(
         label = schedulingAlarm.label.trim().ifBlank { "알람" },
         triggerAtMillis = triggerAt,
         enabled = shouldEnable,
-        includeDatesEpochDay = if (schedulingAlarm.repeatType == RepeatType.WEEKLY) schedulingAlarm.includeDatesEpochDay else emptySet(),
-        excludeDatesEpochDay = if (schedulingAlarm.repeatType == RepeatType.WEEKLY) schedulingAlarm.excludeDatesEpochDay else emptySet(),
+        includeDatesEpochDay = if (schedulingAlarm.repeatType != RepeatType.ONE_TIME) {
+            schedulingAlarm.includeDatesEpochDay
+        } else {
+            emptySet()
+        },
+        excludeDatesEpochDay = if (schedulingAlarm.repeatType != RepeatType.ONE_TIME) {
+            schedulingAlarm.excludeDatesEpochDay
+        } else {
+            emptySet()
+        },
     )
     var persisted: AlarmSpec? = null
     return runCatching {
@@ -2450,6 +2545,12 @@ private fun showDatePicker(context: Context, initialEpochDay: Long?, onSelected:
 
 private fun formatTime(minutes: Int): String = "%02d:%02d".format(minutes / 60, minutes % 60)
 
+private fun formatDurationLabel(seconds: Int): String = when {
+    seconds >= 3_600 -> "${seconds / 3_600}시간 ${seconds % 3_600 / 60}분"
+    seconds >= 60 -> "${seconds / 60}분 ${seconds % 60}초"
+    else -> "${seconds}초"
+}
+
 private fun formatAlarmTime(minutes: Int): String {
     val safeMinutes = minutes.coerceIn(0, 1439)
     val hour24 = safeMinutes / 60
@@ -2472,6 +2573,7 @@ private fun scheduleLabel(alarm: AlarmSpec): String = when (alarm.repeatType) {
             else -> days.joinToString(" ") { shortDay(it) }
         }
     }
+    RepeatType.DAILY -> "매일"
 }
 
 private fun formatStopwatchTime(millis: Long): String {
@@ -2496,6 +2598,7 @@ private fun shortDay(day: Int): String = DayOfWeek.of(day)
 private fun scheduleSummary(alarm: AlarmSpec): String = when (alarm.repeatType) {
     RepeatType.ONE_TIME -> alarm.oneTimeDateEpochDay?.let(::formatDate) ?: "날짜 미정"
     RepeatType.WEEKLY -> alarm.weekdays.sorted().joinToString(" ") { shortDay(it) }
+    RepeatType.DAILY -> "매일"
 }
 
 private fun formatTrigger(millis: Long): String = Instant.ofEpochMilli(millis)
