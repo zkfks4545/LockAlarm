@@ -1,6 +1,19 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.20**이며, 현재 설치 파일은 `outputs/routine-alarm-integrated-final-v15.20-debug.apk`입니다. 1.0.0 전까지 APK 파일명은 `0.xx.xx` 버전에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.21**이며, 현재 설치 파일은 `outputs/routine-alarm-integrated-final-v15.21-debug.apk`입니다. 1.0.0 전까지 APK 파일명은 `0.xx.xx` 버전에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+
+## 0.15.21 — 자동 1회성 날짜 복구의 오늘 우선 보완
+
+- 부팅·시간 변경·정확 알람 권한 복구에서 자동으로 계산된 `ONE_TIME` 날짜가 내일로 남아 있어도, 오늘의 설정 시각이 아직 남았으면 오늘로 다시 기준을 잡습니다.
+- 저장된 트리거가 미래라는 이유만으로 날짜 불일치를 보존하지 않으며, 날짜를 직접 선택한 미래 1회성 알람은 기존대로 유지합니다.
+
+### 검증
+
+- `testDebugUnitTest`: JVM 단위 테스트 143건, 실패/오류 0건
+- `lintDebug`: 오류 0건
+- `assembleDebug`: 성공
+- APK: `outputs/routine-alarm-integrated-final-v15.21-debug.apk`
+- SHA-256: `7A78F4B8122A4D673BAA6644AA67982C5B6EAB6FE0A86C481614EC5501F0EEFD`
 
 ## 0.15.20 — 반복 알람 오늘 우선 및 해제 후 재예약
 

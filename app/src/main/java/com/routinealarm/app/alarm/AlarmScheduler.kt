@@ -12,6 +12,8 @@ import com.routinealarm.app.data.AlarmRepository
 import com.routinealarm.app.data.local.AlarmOccurrenceStatus
 import com.routinealarm.app.model.AlarmSpec
 import com.routinealarm.app.model.RepeatType
+import java.time.Instant
+import java.time.ZoneId
 
 class AlarmScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
@@ -226,18 +228,31 @@ class AlarmScheduler(private val context: Context) {
                 return@forEach
             }
             val nowMillis = System.currentTimeMillis()
-            val shouldRecalculate =
-                stored.repeatType != RepeatType.ONE_TIME || stored.triggerAtMillis <= nowMillis
-            val alarm = if (shouldRecalculate) {
-                val next = AlarmScheduleResolver.nextTriggerAtMillis(
+            val zoneId = ZoneId.systemDefault()
+            val normalized = if (stored.repeatType == RepeatType.ONE_TIME) {
+                AlarmScheduleResolver.prepareForActivation(
                     alarm = stored,
-                    nowMillis = nowMillis,
+                    now = Instant.ofEpochMilli(nowMillis).atZone(zoneId),
                 )
+            } else {
+                stored
+            }
+            val next = AlarmScheduleResolver.nextTriggerAtMillis(
+                alarm = normalized,
+                nowMillis = nowMillis,
+                zoneId = zoneId,
+            )
+            val shouldRecalculate =
+                stored.repeatType != RepeatType.ONE_TIME ||
+                    stored.triggerAtMillis <= nowMillis ||
+                    normalized.oneTimeDateEpochDay != stored.oneTimeDateEpochDay ||
+                    (next != null && next != stored.triggerAtMillis)
+            val alarm = if (shouldRecalculate) {
                 if (next == null) {
                     repository.disable(stored.id)
                     return@forEach
                 }
-                repository.save(stored.copy(triggerAtMillis = next))
+                repository.save(normalized.copy(triggerAtMillis = next))
             } else {
                 stored
             }

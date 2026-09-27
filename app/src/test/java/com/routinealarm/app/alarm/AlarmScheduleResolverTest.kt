@@ -176,6 +176,32 @@ class AlarmScheduleResolverTest {
     }
 
     @Test
+    fun recoveryUsesTodayTriggerWhenAutomaticFutureDateIsStillAhead() {
+        val now = ZonedDateTime.of(2026, 8, 1, 18, 30, 0, 0, zone)
+        val alarm = AlarmSpec(
+            triggerAtMillis = ZonedDateTime.of(2026, 8, 2, 19, 0, 0, 0, zone)
+                .toInstant()
+                .toEpochMilli(),
+            repeatType = RepeatType.ONE_TIME,
+            localTimeMinutes = 19 * 60,
+            oneTimeDateEpochDay = LocalDate.of(2026, 8, 2).toEpochDay(),
+            oneTimeDateUserSelected = false,
+        )
+
+        val prepared = AlarmScheduleResolver.prepareForActivation(alarm, now)
+        val next = AlarmScheduleResolver.nextTriggerAtMillis(
+            alarm = prepared,
+            nowMillis = now.toInstant().toEpochMilli(),
+            zoneId = zone,
+        )
+
+        assertEquals(
+            ZonedDateTime.of(2026, 8, 1, 19, 0, 0, 0, zone).toInstant().toEpochMilli(),
+            next,
+        )
+    }
+
+    @Test
     fun activationMovesPastTimeToTomorrowForUnselectedDate() {
         val now = ZonedDateTime.of(2026, 8, 1, 18, 30, 0, 0, zone)
         val alarm = AlarmSpec(
