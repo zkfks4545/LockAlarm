@@ -1,6 +1,19 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.21**이며, 현재 설치 파일은 `outputs/routine-alarm-integrated-final-v15.21-debug.apk`입니다. 1.0.0 전까지 APK 파일명은 `0.xx.xx` 버전에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.22**이며, 현재 설치 파일은 `outputs/routine-alarm-integrated-final-v15.22-debug.apk`입니다. 1.0.0 전까지 APK 파일명은 `0.xx.xx` 버전에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+
+## 0.15.22 — 로컬 영상 카드 미리보기 축소 보정
+
+- 홈·편집 화면의 로컬 영상 미리보기가 원본 해상도 때문에 카드 가운데 작게 표시되던 변환식을 보정했습니다.
+- 영상은 원본 비율을 유지하면서 홈 카드를 채우고, 편집 화면에서는 카드 안에 맞추며, 출력 경계는 카드 크기로 유지합니다.
+
+### 검증
+
+- `testDebugUnitTest`: JVM 단위 테스트 146건, 실패/오류 0건
+- `lintDebug`: 성공
+- `assembleDebug`: 성공
+- APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
+- SHA-256: `765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F`
 
 ## 0.15.21 — 자동 1회성 날짜 복구의 오늘 우선 보완
 

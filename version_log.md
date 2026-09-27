@@ -4,11 +4,11 @@
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.21**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.22**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 36
-- `versionName`: `0.15.21`
-- 최신 APK: `outputs/routine-alarm-integrated-final-v15.21-debug.apk`
+- `versionCode`: 37
+- `versionName`: `0.15.22`
+- 최신 APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
 - 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역
@@ -49,6 +49,7 @@
 | 0.15.19 | 화면 잠금 타이머의 최대값을 선택한 로컬 미디어 길이로 확장하고, 길이를 확인할 수 없으면 60초 fallback을 사용 | JVM 단위 테스트 140건, 실패/오류 0건, `lintDebug` 오류 0건, `assembleDebug` 성공; SHA-256 `E53FB08A2B312DA1CAFAC22AA69808D3C20DA457A13E4957DE731D10FF3169F2` | `routine-alarm-integrated-final-v15.19-debug.apk` |
 | 0.15.20 | 반복 알람의 현재 날짜 우선 재계산, 울림 해제 후 같은 날 재발 방지 및 내일부터 재예약 | JVM 단위 테스트 142건, 실패/오류 0건, `lintDebug` 오류 0건, `assembleDebug` 성공; SHA-256 `F01674354E47B1301261E2B7385D88BDD066A67B047157D1787FD5F778887F0C` | `routine-alarm-integrated-final-v15.20-debug.apk` |
 | 0.15.21 | 자동 1회성 날짜가 내일로 남은 레거시 저장 상태도 복구 시 오늘 우선으로 재기준하고, 명시적 미래 날짜는 유지 | JVM 단위 테스트 143건, 실패/오류 0건, `lintDebug` 오류 0건, `assembleDebug` 성공; SHA-256 `7A78F4B8122A4D673BAA6644AA67982C5B6EAB6FE0A86C481614EC5501F0EEFD` | `routine-alarm-integrated-final-v15.21-debug.apk` |
+| 0.15.22 | 홈·편집 로컬 영상 미리보기의 원본 해상도 중복 축소를 보정하고 카드 경계 내 비율 유지 | JVM 단위 테스트 146건, 실패/오류 0건, `lintDebug`·`assembleDebug` 성공; SHA-256 `765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F` | `routine-alarm-integrated-final-v15.22-debug.apk` |
 
 참고: 현재 변경 기록에는 `0.14.x`와 `0.15.0`의 별도 기능·빌드 항목이 없으며, `0.13.1` 다음 기록은 `0.15.1`이다.
 
@@ -139,11 +140,12 @@
 | `routine-alarm-integrated-final-v15.19-debug.apk` | 2026-09-19 20:14:16 | 12,213,474 | `E53FB08A2B312DA1CAFAC22AA69808D3C20DA457A13E4957DE731D10FF3169F2` |
 | `routine-alarm-integrated-final-v15.20-debug.apk` | 2026-09-23 10:39:27 | 12,213,478 | `F01674354E47B1301261E2B7385D88BDD066A67B047157D1787FD5F778887F0C` |
 | `routine-alarm-integrated-final-v15.21-debug.apk` | 2026-09-23 10:51:08 | 12,213,478 | `7A78F4B8122A4D673BAA6644AA67982C5B6EAB6FE0A86C481614EC5501F0EEFD` |
+| `routine-alarm-integrated-final-v15.22-debug.apk` | 2026-09-27 13:19:56 | 12,213,478 | `765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F` |
 | `routine-alarm-integrated-final-debug.apk` | 2026-09-04 11:30:52 | 12,197,090 | `1C3C15C88FEE13745529F137EF9086C1FFC26A7F3EA50FDEAB48C831FD31572C` |
 
-`routine-alarm-integrated-final-debug.apk`는 현재 v15.17 APK와 크기 및 SHA-256이 동일하다. 최신 버전 v15.21 APK와는 별도 파일이며, v15.21의 SHA-256은 `7A78F4B8122A4D673BAA6644AA67982C5B6EAB6FE0A86C481614EC5501F0EEFD`이다.
+`routine-alarm-integrated-final-debug.apk`는 현재 v15.17 APK와 크기 및 SHA-256이 동일하다. 최신 버전 v15.22 APK와는 별도 파일이며, v15.22의 SHA-256은 `765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F`이다.
 
-현재 `outputs` 폴더에는 v15.7~v15.21과 `final-debug.apk`가 보관되어 있다. 아래 빌드는 과거 산출물이 현재 폴더에서 정리된 뒤에도 변경 문서에 해시가 남아 있는 기록이다.
+현재 `outputs` 폴더에는 v15.7~v15.22와 `final-debug.apk`가 보관되어 있다. 아래 빌드는 과거 산출물이 현재 폴더에서 정리된 뒤에도 변경 문서에 해시가 남아 있는 기록이다.
 
 ### 현재 폴더에 없는 과거 빌드 기록
 
@@ -170,7 +172,7 @@
 
 최종 검증 결과는 `testDebugUnitTest` 90건 통과, `lintDebug` 성공, `assembleDebug` 성공이다.
 
-이후 버전에서는 0.13.0·0.13.1에서 93건, 0.15.1에서 93건, 0.15.2~0.15.6에서 96건, 0.15.7에서 97건, 0.15.8~0.15.10에서 100건, 0.15.11에서 108건, 0.15.12~0.15.13에서 110건, 0.15.14에서 111건, 0.15.15에서 134건, 0.15.16에서 135건, 0.15.17에서 136건, 0.15.18에서 135건, 0.15.19에서 140건, 0.15.20에서 142건, 0.15.21에서 143건으로 검증 범위를 확장했다. 각 버전의 상세 결과와 해시는 버전별 개선 내역 및 빌드 기록 표에 반영했다.
+이후 버전에서는 0.13.0·0.13.1에서 93건, 0.15.1에서 93건, 0.15.2~0.15.6에서 96건, 0.15.7에서 97건, 0.15.8~0.15.10에서 100건, 0.15.11에서 108건, 0.15.12~0.15.13에서 110건, 0.15.14에서 111건, 0.15.15에서 134건, 0.15.16에서 135건, 0.15.17에서 136건, 0.15.18에서 135건, 0.15.19에서 140건, 0.15.20에서 142건, 0.15.21에서 143건, 0.15.22에서 146건으로 검증 범위를 확장했다. 각 버전의 상세 결과와 해시는 버전별 개선 내역 및 빌드 기록 표에 반영했다.
 
 ## 남은 실기기 검증
 

@@ -5,6 +5,34 @@ import org.junit.Test
 
 class VideoAspectFitTest {
     @Test
+    fun highResolutionPreviewWithMatchingRatioDoesNotShrink() {
+        assertEquals(
+            PreviewTextureScale(1f, 1f),
+            calculatePreviewTextureScale(1_920, 1_080, 480, 270, cropToFill = true),
+        )
+        assertEquals(
+            PreviewTextureScale(1f, 1f),
+            calculatePreviewTextureScale(3_840, 2_160, 480, 270, cropToFill = true),
+        )
+    }
+
+    @Test
+    fun portraitPreviewCropsVerticallyInsideWideCard() {
+        val scale = calculatePreviewTextureScale(1_080, 1_920, 510, 290, cropToFill = true)
+
+        assertEquals(1f, scale.x, 0.001f)
+        assertEquals(3.1264f, scale.y, 0.001f)
+    }
+
+    @Test
+    fun portraitPreviewFitsInsideWideEditorWithoutCropping() {
+        val scale = calculatePreviewTextureScale(1_080, 1_920, 510, 290, cropToFill = false)
+
+        assertEquals(0.32f, scale.x, 0.001f)
+        assertEquals(1f, scale.y, 0.001f)
+    }
+
+    @Test
     fun landscapeVideoUsesMaximumWidthInsideWideScreen() {
         assertEquals(
             VideoDisplaySize(width = 2_133, height = 1_200),

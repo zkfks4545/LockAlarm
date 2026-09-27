@@ -313,6 +313,7 @@ private class PreviewTextureVideoView(
             MediaPlayer().apply {
                 setDataSource(context, uri)
                 setSurface(surface)
+                setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT)
                 isLooping = true
                 setVolume(0f, 0f)
             }
@@ -370,15 +371,15 @@ private class PreviewTextureVideoView(
             setTransform(Matrix())
             return
         }
-        val widthScale = viewWidth.toFloat() / size.width.toFloat()
-        val heightScale = viewHeight.toFloat() / size.height.toFloat()
-        val scale = if (cropToFill) {
-            max(widthScale, heightScale)
-        } else {
-            min(widthScale, heightScale)
-        }
+        val scale = calculatePreviewTextureScale(
+            sourceWidth = size.width,
+            sourceHeight = size.height,
+            viewWidth = viewWidth,
+            viewHeight = viewHeight,
+            cropToFill = cropToFill,
+        )
         setTransform(Matrix().apply {
-            setScale(scale, scale, viewWidth / 2f, viewHeight / 2f)
+            setScale(scale.x, scale.y, viewWidth / 2f, viewHeight / 2f)
         })
     }
 
@@ -453,6 +454,26 @@ data class VideoDisplaySize(
     val height: Int,
 ) {
     val isLandscape: Boolean get() = width >= height
+}
+
+data class PreviewTextureScale(val x: Float, val y: Float)
+
+fun calculatePreviewTextureScale(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    viewWidth: Int,
+    viewHeight: Int,
+    cropToFill: Boolean,
+): PreviewTextureScale {
+    if (sourceWidth <= 0 || sourceHeight <= 0 || viewWidth <= 0 || viewHeight <= 0) {
+        return PreviewTextureScale(1f, 1f)
+    }
+    val widthScale = viewWidth.toFloat() / sourceWidth
+    val heightScale = viewHeight.toFloat() / sourceHeight
+    val targetScale = if (cropToFill) max(widthScale, heightScale) else min(widthScale, heightScale)
+    // MediaPlayer's SCALE_TO_FIT already maps the source to the full TextureView.
+    // Apply only the remaining correction for aspect ratio and center crop.
+    return PreviewTextureScale(targetScale / widthScale, targetScale / heightScale)
 }
 
 /** Returns the video's displayed size, after its encoded rotation is applied. */

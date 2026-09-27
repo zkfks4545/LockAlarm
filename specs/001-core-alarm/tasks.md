@@ -108,6 +108,7 @@
 - [x] T373 0.15.20 README/Living Spec/current-state/CHANGELOG/version log와 debug APK 기록을 갱신하고 테스트·lint·assembleDebug를 실행한다.
 - [x] T374 0.15.21 복구 시 자동 `ONE_TIME` 날짜와 저장된 미래 트리거의 불일치를 오늘 우선으로 재기준하고 명시적 미래 날짜는 보존한다.
 - [x] T375 0.15.21 버전 기록·Living Spec·README·debug APK를 갱신하고 테스트·lint·assembleDebug 및 APK 메타데이터를 확인한다.
+- [x] T376 0.15.22 홈·편집 로컬 영상 미리보기의 원본 해상도 중복 축소를 보정하고 카드 경계 내 비율 유지를 검증한다.
 
 - [x] D001 새 정규 발생은 현재 울림·스누즈 대기·스누즈 재울림을 모두 선점하고 즉시 시작한다. 단일 서비스·재생 세션을 유지하며 이전 FIFO `WAITING` 행은 취소한다.
 - [ ] D002 전원이 꺼진 사이 지난 정규/스누즈 발생의 만료 정책.
