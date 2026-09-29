@@ -43,6 +43,8 @@ Gradle은 LOCKALARM_STORE_FILE, LOCKALARM_STORE_PASSWORD, LOCKALARM_KEY_ALIAS, L
 
 JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 
+이미 이전 개발용 APK가 설치된 기기에서 정식 APK를 실행하면, Play Protect 경고 다음에 “앱이 설치되지 않았습니다”가 나타날 수 있습니다. 공개 APK의 해시·서명은 로컬 릴리스 APK와 일치하지만, **해당 기기에 설치된 앱의 서명과 설치 오류 코드는 아직 확인하지 못했습니다.** 이전 설치본이 Debug 키라면 다른 정식 키로 덮어쓰기 업데이트할 수 없는 것이 유력한 원인입니다. 경고 자체와 이후 설치 실패를 같은 원인으로 단정하지 마세요. 데이터 유실을 피하려면 앱 삭제 전에 [설치 문제 확인](docs/INSTALLATION.md)의 절차를 따르세요.
+
 - 정식 APK 설치와 필수 권한 안내
 - 단발·반복 알람, 스누즈·해제, 재부팅 후 예약
 - 잠금 화면·Doze·Galaxy 절전 상태에서 울림
@@ -91,7 +93,7 @@ Play 계정·테스트 정책·비용은 실제 등록 시 최신 공식 안내�
 - `apksigner verify --print-certs` — 서명 확인 성공, 인증서 `CN=LockAlarm` 및 위 SHA-256과 일치.
 - `aapt dump badging` — 패키지 `com.routinealarm.app`, versionName `0.15.22`, versionCode `37` 확인. 빌드 도구가 디버그 플래그를 찾지 못함.
 - `tools/tests/release-safety.Tests.ps1` — 키 경로·기존 파일 보호 등 5개 안전성 검사 통과.
-- 실제 Galaxy·잠금 화면·Doze·재부팅·OEM 절전 동작은 아직 테스트하지 않았습니다. GitHub 공개 APK 자산의 SHA-256은 페이지에서 확인했고 로컬 검증값과 일치합니다.
+- 실제 Galaxy·잠금 화면·Doze·재부팅·OEM 절전 동작은 아직 테스트하지 않았습니다. GitHub 공개 APK 자산을 직접 내려받아 SHA-256과 서명 인증서를 확인했고 로컬 릴리스 APK와 일치합니다. 이는 기기 설치 성공을 뜻하지 않습니다.
 
 검증 명령 (JAVA_HOME은 JDK 17, ANDROID_HOME은 로컬 Android SDK로 설정):
 
