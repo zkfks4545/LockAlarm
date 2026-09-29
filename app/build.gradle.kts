@@ -5,6 +5,35 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
 }
 
+// Signing secrets are supplied only to the local build process, never committed.
+val releaseStorePath = providers.environmentVariable("LOCKALARM_STORE_FILE").orNull
+val releaseStorePassword = providers.environmentVariable("LOCKALARM_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("LOCKALARM_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("LOCKALARM_KEY_PASSWORD").orNull
+val releaseSigningReady = listOf(
+    releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
+val verifyReleaseSigning by tasks.registering {
+    group = "verification"
+    description = "Reject release packaging without an explicit private signing key."
+    doLast {
+        check(releaseSigningReady) {
+            "Release signing is not configured. Run tools/release.ps1 -Action Build; never put passwords in source or command arguments."
+        }
+        val store = rootProject.file(requireNotNull(releaseStorePath))
+        check(store.isFile && !store.name.equals("debug.keystore", ignoreCase = true)) {
+            "An existing non-debug release keystore is required."
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name in setOf("assembleRelease", "bundleRelease", "packageRelease", "packageReleaseBundle", "signReleaseBundle", "validateSigningRelease")) {
+        dependsOn(verifyReleaseSigning)
+    }
+}
+
 android {
     namespace = "com.routinealarm.app"
     compileSdk = 36
@@ -19,8 +48,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (releaseSigningReady) {
+                storeFile = rootProject.file(requireNotNull(releaseStorePath))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseSigningReady) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

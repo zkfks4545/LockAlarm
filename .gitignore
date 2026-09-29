@@ -23,6 +23,18 @@ outputs/*.zip
 outputs/*.md
 !outputs/planning-and-slice-summary.md
 
+# Keystore & Signing Secrets
+*.jks
+*.keystore
+*.p12
+keystore.properties
+signing.properties
+.signing/
+/key/
+
+# Local agent execution records (may contain private build context)
+.agent/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db

@@ -1,6 +1,6 @@
 # 루틴 알람 버전·빌드 내역
 
-작성 기준: 2026-09-27 (Asia/Seoul)
+작성 기준: 2026-09-29 (Asia/Seoul)
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
@@ -8,8 +8,9 @@
 
 - `versionCode`: 37
 - `versionName`: `0.15.22`
-- 최신 APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
-- 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
+- 최신 개발용 APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
+- 최신 정식 서명 APK: `app/build/outputs/apk/release/LockAlarm-v0.15.22.apk` (로컬 검증 완료, GitHub 미게시)
+- 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역
 
@@ -50,6 +51,16 @@
 | 0.15.20 | 반복 알람의 현재 날짜 우선 재계산, 울림 해제 후 같은 날 재발 방지 및 내일부터 재예약 | JVM 단위 테스트 142건, 실패/오류 0건, `lintDebug` 오류 0건, `assembleDebug` 성공; SHA-256 `F01674354E47B1301261E2B7385D88BDD066A67B047157D1787FD5F778887F0C` | `routine-alarm-integrated-final-v15.20-debug.apk` |
 | 0.15.21 | 자동 1회성 날짜가 내일로 남은 레거시 저장 상태도 복구 시 오늘 우선으로 재기준하고, 명시적 미래 날짜는 유지 | JVM 단위 테스트 143건, 실패/오류 0건, `lintDebug` 오류 0건, `assembleDebug` 성공; SHA-256 `7A78F4B8122A4D673BAA6644AA67982C5B6EAB6FE0A86C481614EC5501F0EEFD` | `routine-alarm-integrated-final-v15.21-debug.apk` |
 | 0.15.22 | 홈·편집 로컬 영상 미리보기의 원본 해상도 중복 축소를 보정하고 카드 경계 내 비율 유지 | JVM 단위 테스트 146건, 실패/오류 0건, `lintDebug`·`assembleDebug` 성공; SHA-256 `765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F` | `routine-alarm-integrated-final-v15.22-debug.apk` |
+
+### 0.15.22 정식 서명 APK 빌드 기록
+
+- 생성일: 2026-09-29
+- 패키지 / 버전: `com.routinealarm.app` / `0.15.22` (versionCode `37`)
+- 검증: `verifyReleaseSigning`, `testReleaseUnitTest`(146건), `lintRelease`(오류 0·경고 43·힌트 8), `assembleRelease` 성공; `apksigner verify` 통과
+- APK: `LockAlarm-v0.15.22.apk` (8,772,356 bytes)
+- APK SHA-256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
+- 서명 인증서: `CN=LockAlarm`; SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
+- 배포 예정 유형: GitHub Pre-release (현재 미게시). Galaxy·잠금 화면·Doze·재부팅·제조사별 동작은 실기기 검증 전이며 안정판으로 단정하지 않음
 
 참고: 현재 변경 기록에는 `0.14.x`와 `0.15.0`의 별도 기능·빌드 항목이 없으며, `0.13.1` 다음 기록은 `0.15.1`이다.
 
