@@ -4,11 +4,11 @@
 
 알람이 울리면 화면 밝기와 미디어 음량을 초기값으로 한 번 적용하고, 잠금 화면이나 다른 앱 위에서도 전체 화면을 유지합니다. 계정·서버·텔레메트리 없이 오프라인 우선으로 동작합니다.
 
-> 현재 앱 버전은 `0.15.22`(versionCode `37`)입니다. GitHub **Pre-release 게시를 준비 중이며, 현재 아직 공개 전**입니다. 공개 후에는 실제 기기 검증을 마치기 전까지 시험판으로 유지합니다.
+> 현재 앱 버전은 `0.15.22`(versionCode `37`)입니다. GitHub에 **Pre-release 시험판이 공개**되어 있습니다. 실제 기기 검증을 마치기 전까지 안정판으로 표시하지 않습니다.
 
 ## 다운로드
 
-[GitHub Releases](https://github.com/zkfks4545/LockAlarm/releases)에 게시되면 `v0.15.22`의 `LockAlarm-v0.15.22.apk`를 내려받을 수 있습니다. 현재는 로컬 검증만 끝났고 공개 게시 전입니다.
+[`v0.15.22` GitHub Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)에서 [서명 APK](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk)를 내려받을 수 있습니다.
 
 - APK SHA-256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
 - 서명 인증서 SHA-256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`

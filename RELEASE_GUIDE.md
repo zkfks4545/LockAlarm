@@ -1,6 +1,6 @@
 # LockAlarm GitHub 배포 및 서명키 운영
 
-현재 버전은 **0.15.22 / 코드 37**입니다. 정식 서명 APK 생성·로컬 검증은 완료됐지만, GitHub Release는 아직 게시 전입니다. 이번 게시 유형은 **Pre-release**이며, 실제 기기 검증 전에는 안정판으로 표시하지 않습니다. Play Store 등록과 자동 업데이트는 보류합니다. 기존 `v15.22-debug.apk`는 개발용 인증서로 서명되어 배포본으로 쓰지 않습니다.
+현재 버전은 **0.15.22 / 코드 37**입니다. 정식 서명 APK 생성·로컬 검증을 마쳤고, GitHub [Release `v0.15.22`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)를 **Pre-release**로 공개했습니다. 공개 APK의 SHA-256도 로컬 검증값과 일치합니다. 실제 기기 검증 전에는 안정판으로 표시하지 않습니다. Play Store 등록과 자동 업데이트는 보류합니다. 기존 `v15.22-debug.apk`는 개발용 인증서로 서명되어 배포본으로 쓰지 않습니다.
 
 > 정식 키는 생성됐고, 프로젝트의 `key/` 백업 폴더는 Git에서 제외됩니다. 키·백업·비밀번호는 GitHub나 채팅에 올리지 마세요. 비밀번호는 로컬 숨김 입력에만 입력합니다. 개발용 설치본과 정식 APK는 서명이 다르므로 덮어쓰기 설치를 가정하지 마세요. 앱 삭제는 로컬 알람 데이터를 지울 수 있습니다. 서명 자체가 Play Protect 경고 제거를 보장하지 않으며 보안 경고를 일괄 무시하지 마세요.
 
@@ -50,15 +50,19 @@ JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 - 밝기·음량의 시작 적용과 종료 복원
 - 개발용 설치본에서 정식 설치본으로 전환 시 데이터 영향
 
-## 4. GitHub Releases 게시
+## 4. GitHub Releases 게시 기록 및 다음 배포 절차
 
 대상: [zkfks4545/LockAlarm](https://github.com/zkfks4545/LockAlarm).
 
+2026-09-29 `v0.15.22`를 공개했습니다. 다음 릴리스에도 아래 절차를 반복합니다.
+
 1. 릴리스에 필요한 코드·문서만 검토하고 커밋합니다. `.agent/`, `.agent-tasks/`, 키, 비밀번호, 로컬 설정 및 빌드 APK는 Git 커밋에서 제외합니다.
-2. 이번 대상은 tag `v0.15.22`, APK `LockAlarm-v0.15.22.apk`입니다. 기존 태그·Release가 있는지 확인하고 버전을 임의로 올리거나 기존 태그를 이동하지 않습니다.
+2. 버전 태그와 서명 APK를 확인하고, 기존 태그를 임의로 이동하지 않습니다.
 3. 공개 서명 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`, APK SHA-256 및 검증·미검증 사항을 릴리스 노트에 기록합니다.
-4. GitHub Release에서 **Pre-release**를 선택하고 APK만 첨부합니다. 개인 서명키 파일은 첨부하지 않습니다.
-5. 공개 후 GitHub에서 다운로드한 자산의 SHA-256과 태그 대상 커밋을 다시 확인합니다.
+4. 시험 배포라면 GitHub Release에서 **Pre-release**를 선택합니다. 개인 서명키 파일은 첨부하지 않습니다.
+5. 공개 후 GitHub 자산의 SHA-256과 태그 대상 커밋을 다시 확인합니다.
+
+이번 공개 결과: [Pre-release `v0.15.22`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22), 태그 대상 커밋 `5a137778e1cbe832c0e7ea49b8c2b287be52f9f8`. 공개 APK SHA-256은 `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`로 로컬 검증값과 일치합니다.
 
 Pre-release는 지금 내려받을 수 있는 공개 시험판입니다. 실기기 검증을 끝내기 전에는 안정판으로 표시하지 않습니다. 검증 후 같은 릴리스의 Pre-release 표시를 해제해 안정판으로 전환할 수 있습니다. 이후 버전의 공개 게시 전에는 게시 범위와 테스트 결과를 다시 확인합니다.
 
@@ -87,7 +91,7 @@ Play 계정·테스트 정책·비용은 실제 등록 시 최신 공식 안내�
 - `apksigner verify --print-certs` — 서명 확인 성공, 인증서 `CN=LockAlarm` 및 위 SHA-256과 일치.
 - `aapt dump badging` — 패키지 `com.routinealarm.app`, versionName `0.15.22`, versionCode `37` 확인. 빌드 도구가 디버그 플래그를 찾지 못함.
 - `tools/tests/release-safety.Tests.ps1` — 키 경로·기존 파일 보호 등 5개 안전성 검사 통과.
-- 실제 Galaxy·잠금 화면·Doze·재부팅·OEM 절전 동작은 아직 테스트하지 않았습니다. GitHub 업로드 후 원격 자산 해시 검증도 남아 있습니다.
+- 실제 Galaxy·잠금 화면·Doze·재부팅·OEM 절전 동작은 아직 테스트하지 않았습니다. GitHub 공개 APK 자산의 SHA-256은 페이지에서 확인했고 로컬 검증값과 일치합니다.
 
 검증 명령 (JAVA_HOME은 JDK 17, ANDROID_HOME은 로컬 Android SDK로 설정):
 
@@ -98,4 +102,4 @@ Play 계정·테스트 정책·비용은 실제 등록 시 최신 공식 안내�
 pwsh -NoProfile -File .\tools\tests\release-safety.Tests.ps1
 ~~~
 
-위의 `verifyReleaseSigning` 및 `assembleRelease` 단독 명령은 비밀번호 환경 변수가 없는 셸에서 실행하면 의도적으로 차단됩니다. 이는 최초 키 누락 사전 점검 기록이며, 2026-09-29에는 `tools/release.ps1 -Action Build`에 실제 키를 숨김 입력해 서명 성공 경로와 APK 검증을 완료했습니다. 실기기 검증과 GitHub 자산 게시 후 해시 재검증은 별도 단계입니다.
+위의 `verifyReleaseSigning` 및 `assembleRelease` 단독 명령은 비밀번호 환경 변수가 없는 셸에서 실행하면 의도적으로 차단됩니다. 이는 최초 키 누락 사전 점검 기록이며, 2026-09-29에는 `tools/release.ps1 -Action Build`에 실제 키를 숨김 입력해 서명 성공 경로와 APK 검증을 완료했습니다. 실기기 검증은 별도 단계입니다.

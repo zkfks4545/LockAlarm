@@ -9,7 +9,7 @@
 - `versionCode`: 37
 - `versionName`: `0.15.22`
 - 최신 개발용 APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
-- 최신 정식 서명 APK: `app/build/outputs/apk/release/LockAlarm-v0.15.22.apk` (로컬 검증 완료, GitHub 미게시)
+- 최신 정식 서명 APK: [`LockAlarm-v0.15.22.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk) (GitHub Pre-release 공개, 원격 SHA-256 확인 완료)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역
@@ -60,7 +60,8 @@
 - APK: `LockAlarm-v0.15.22.apk` (8,772,356 bytes)
 - APK SHA-256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
 - 서명 인증서: `CN=LockAlarm`; SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
-- 배포 예정 유형: GitHub Pre-release (현재 미게시). Galaxy·잠금 화면·Doze·재부팅·제조사별 동작은 실기기 검증 전이며 안정판으로 단정하지 않음
+- 배포: 2026-09-29 GitHub [Pre-release `v0.15.22`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22) 공개 완료. 태그 대상은 커밋 `5a137778e1cbe832c0e7ea49b8c2b287be52f9f8`이며, 공개 APK SHA-256은 위 로컬 값과 일치.
+- Galaxy·잠금 화면·Doze·재부팅·제조사별 동작은 실기기 검증 전이며 안정판으로 단정하지 않음.
 
 참고: 현재 변경 기록에는 `0.14.x`와 `0.15.0`의 별도 기능·빌드 항목이 없으며, `0.13.1` 다음 기록은 `0.15.1`이다.
 

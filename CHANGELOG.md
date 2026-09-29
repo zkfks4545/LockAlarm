@@ -2,7 +2,7 @@
 
 이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.22**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.22-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.22.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
 
-## 0.15.22 — GitHub Pre-release 게시 준비 (현재 미게시)
+## 0.15.22 — GitHub Pre-release 공개
 
 - 비밀번호를 코드나 설정 파일에 저장하지 않고 환경 변수로 받는 release 서명 연결을 추가했습니다.
 - 키 정보 누락 시 릴리스 패키징을 차단하는 검사와 로컬 키 생성·검증 빌드 도구 `tools/release.ps1`을 추가했습니다.
@@ -11,7 +11,8 @@
 - `testReleaseUnitTest`: 146건 통과. `lintRelease`: 성공, 오류 0건(경고 43건·힌트 8건). `assembleRelease`: 성공.
 - 서명 인증서: `CN=LockAlarm`; 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`.
 - 서명 APK SHA-256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`.
-- 게시 예정 유형은 GitHub Pre-release입니다. Galaxy·잠금 화면·Doze·제조사별 실기기 검증은 공개 후 안정판 전환 전에 별도로 진행합니다. Play Store와 자동 업데이트는 보류합니다.
+- 2026-09-29 GitHub [Pre-release `v0.15.22`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)를 공개했습니다. 서명 APK 자산의 원격 SHA-256이 로컬 검증값과 일치합니다.
+- Galaxy·잠금 화면·Doze·제조사별 실기기 검증은 안정판 전환 전에 별도로 진행합니다. Play Store와 자동 업데이트는 보류합니다.
 
 ## 0.15.22 — 로컬 영상 카드 미리보기 축소 보정
 
