@@ -172,10 +172,9 @@ class AlarmOverlayController(private val context: Context) {
                     marginEnd = dp(20)
                 },
             )
-            // The swipe surface occupies the space above the action row. It
-            // is also added before the row so the explicit buttons remain
-            // the topmost touch targets if the bounds ever approach each
-            // other on a small or resized display.
+            // The swipe gesture view spans the bottom action area so the indicator
+            // is drawn in the widened gap between the snooze and dismiss buttons,
+            // while capturing upward swipe gestures starting from the lower screen.
             addView(
                 AlarmDismissGestureView(
                     context = context,
@@ -183,15 +182,15 @@ class AlarmOverlayController(private val context: Context) {
                 ) {
                     dismissAlarm(alarm, session)
                 },
-                FrameLayout.LayoutParams(dp(280), dp(180)).apply {
+                FrameLayout.LayoutParams(MATCH_PARENT, dp(180)).apply {
                     gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                    bottomMargin = dp(ACTION_ROW_HEIGHT_DP + ACTION_ROW_BOTTOM_MARGIN_DP + ACTION_GESTURE_GAP_DP)
+                    bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP)
                 },
             )
             addView(
                 createActionRow(alarm, session, unlockAtMillis),
                 FrameLayout.LayoutParams(MATCH_PARENT, dp(ACTION_ROW_HEIGHT_DP)).apply {
-                    gravity = Gravity.BOTTOM or Gravity.END
+                    gravity = Gravity.BOTTOM
                     bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP)
                 },
             )
@@ -199,11 +198,9 @@ class AlarmOverlayController(private val context: Context) {
     }
 
     /**
-     * Keeps the two explicit actions in one centered row. The outer view is
-     * full width with horizontal padding so the row remains inside the
-     * display on narrow, wide, and resized/folded layouts; the actual
-     * buttons stay compact and balanced instead of stretching across a
-     * tablet-sized overlay.
+     * Places the Snooze button on the left and Dismiss button on the right,
+     * leaving a generous, widened center gap where the swipe unlock indicator
+     * is displayed and gestured.
      */
     private fun createActionRow(
         alarm: AlarmSpec,
@@ -211,15 +208,12 @@ class AlarmOverlayController(private val context: Context) {
         unlockAtMillis: Long,
     ): View {
         val hasSnooze = session.state == AlarmSessionState.FIRING && session.snoozeCount >= 0
-        val buttonCount = if (hasSnooze) 2 else 1
-        val gap = if (hasSnooze) dp(ACTION_BUTTON_GAP_DP) else 0
         val horizontalPadding = dp(ACTION_ROW_HORIZONTAL_PADDING_DP)
-        val availableWidth = (
-            context.resources.displayMetrics.widthPixels - (horizontalPadding * 2) - gap
-            ).coerceAtLeast(dp(1))
+        val screenWidth = context.resources.displayMetrics.widthPixels
+        val availableWidth = (screenWidth - (horizontalPadding * 2)).coerceAtLeast(dp(1))
         val buttonWidth = minOf(
             dp(ACTION_BUTTON_MAX_WIDTH_DP),
-            (availableWidth / buttonCount).coerceAtLeast(dp(1)),
+            ((availableWidth - dp(80)) / 2).coerceAtLeast(dp(80)),
         )
 
         return FrameLayout(context).apply {
@@ -227,23 +221,37 @@ class AlarmOverlayController(private val context: Context) {
             addView(
                 LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER
+                    gravity = Gravity.CENTER_VERTICAL
                     if (hasSnooze) {
                         addView(
                             createSnoozeControl(alarm, session, unlockAtMillis),
-                            LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT).apply {
-                                marginEnd = gap
-                            },
+                            LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
+                        )
+                        // Widened center gap: transparent space allowing the gesture view behind to shine through
+                        addView(
+                            android.widget.Space(context),
+                            LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
+                        )
+                        addView(
+                            createCloseButton(alarm, session, unlockAtMillis),
+                            LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
+                        )
+                    } else {
+                        addView(
+                            android.widget.Space(context),
+                            LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
+                        )
+                        addView(
+                            createCloseButton(alarm, session, unlockAtMillis),
+                            LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
+                        )
+                        addView(
+                            android.widget.Space(context),
+                            LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
                         )
                     }
-                    addView(
-                        createCloseButton(alarm, session, unlockAtMillis),
-                        LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
-                    )
                 },
-                FrameLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT).apply {
-                    gravity = Gravity.CENTER
-                },
+                FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT),
             )
         }
     }
@@ -380,15 +388,14 @@ class AlarmOverlayController(private val context: Context) {
     private companion object {
         const val MATCH_PARENT = WindowManager.LayoutParams.MATCH_PARENT
         const val WRAP_CONTENT = WindowManager.LayoutParams.WRAP_CONTENT
-        const val ACTION_ROW_HEIGHT_DP = 56
-        const val ACTION_ROW_BOTTOM_MARGIN_DP = 24
-        const val ACTION_ROW_HORIZONTAL_PADDING_DP = 24
-        const val ACTION_GESTURE_GAP_DP = 16
-        const val ACTION_BUTTON_GAP_DP = 8
-        const val ACTION_BUTTON_MAX_WIDTH_DP = 132
-        const val SENSOR_UNLOCK_FALLBACK_MILLIS = 3_000L
     }
 }
+
+private const val ACTION_ROW_HEIGHT_DP = 56
+private const val ACTION_ROW_BOTTOM_MARGIN_DP = 24
+private const val ACTION_ROW_HORIZONTAL_PADDING_DP = 16
+private const val ACTION_BUTTON_MAX_WIDTH_DP = 116
+private const val SENSOR_UNLOCK_FALLBACK_MILLIS = 3_000L
 
 @SuppressLint("ViewConstructor")
 private class AlarmClockTextView(context: Context) : TextView(context) {
@@ -619,6 +626,7 @@ private class AlarmDismissGestureView(
     }
     private var downX = 0f
     private var downY = 0f
+    private var currentY = 0f
     private var tracking = false
 
     init {
@@ -631,34 +639,56 @@ private class AlarmDismissGestureView(
         super.onDraw(canvas)
         val unlocked = isUnlocked()
         val centerX = width / 2f
-        val handleY = height - 28f * density
-        handlePaint.alpha = if (unlocked) 255 else 150
-        canvas.drawRoundRect(
-            centerX - 30f * density,
-            handleY - 3f * density,
-            centerX + 30f * density,
-            handleY + 3f * density,
-            3f * density,
-            3f * density,
-            handlePaint,
-        )
+        val rowCenterY = height - (ACTION_ROW_HEIGHT_DP / 2f) * density
+        val dragY = if (tracking) (downY - currentY).coerceAtLeast(0f) * 0.35f else 0f
+        val targetY = rowCenterY - dragY
+
         if (unlocked) {
-            arrowPaint.alpha = 220
-            canvas.drawLine(centerX, handleY - 10f * density, centerX, handleY - 34f * density, arrowPaint)
-            canvas.drawLine(centerX, handleY - 34f * density, centerX - 8f * density, handleY - 25f * density, arrowPaint)
-            canvas.drawLine(centerX, handleY - 34f * density, centerX + 8f * density, handleY - 25f * density, arrowPaint)
-        }
-        val text = if (unlocked) {
-            "위로 밀어 알람 종료"
+            arrowPaint.alpha = if (tracking) 255 else 200
+            val chevronY = targetY - 10f * density
+            // Upper chevron
+            canvas.drawLine(centerX, chevronY - 5f * density, centerX - 7f * density, chevronY, arrowPaint)
+            canvas.drawLine(centerX, chevronY - 5f * density, centerX + 7f * density, chevronY, arrowPaint)
+            // Lower chevron
+            canvas.drawLine(centerX, chevronY + 1f * density, centerX - 7f * density, chevronY + 6f * density, arrowPaint)
+            canvas.drawLine(centerX, chevronY + 1f * density, centerX + 7f * density, chevronY + 6f * density, arrowPaint)
+
+            textPaint.alpha = if (tracking) 255 else 220
+            textPaint.textSize = 11.5f * density
+            canvas.drawText("스와이프하여 잠금해제", centerX, targetY + 8f * density, textPaint)
+
+            handlePaint.alpha = if (tracking) 255 else 160
+            val pillY = targetY + 16f * density
+            canvas.drawRoundRect(
+                centerX - 16f * density,
+                pillY - 1.5f * density,
+                centerX + 16f * density,
+                pillY + 1.5f * density,
+                2f * density,
+                2f * density,
+                handlePaint,
+            )
         } else {
             val remaining = AlarmTimerPolicy.remainingSecondsUntil(
                 unlockAtMillis = unlockAtMillis,
                 nowMillis = System.currentTimeMillis(),
             )
-            "잠금 해제까지 ${remaining.coerceAtLeast(1)}초"
+            textPaint.alpha = 180
+            textPaint.textSize = 11.5f * density
+            canvas.drawText("잠금 해제까지 ${remaining.coerceAtLeast(1)}초", centerX, rowCenterY + 4f * density, textPaint)
+
+            handlePaint.alpha = 100
+            val pillY = rowCenterY + 14f * density
+            canvas.drawRoundRect(
+                centerX - 16f * density,
+                pillY - 1.5f * density,
+                centerX + 16f * density,
+                pillY + 1.5f * density,
+                2f * density,
+                2f * density,
+                handlePaint,
+            )
         }
-        textPaint.alpha = if (unlocked) 255 else 180
-        canvas.drawText(text, centerX, handleY - 56f * density, textPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -666,7 +696,17 @@ private class AlarmDismissGestureView(
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x
                 downY = event.y
+                currentY = event.y
                 tracking = isUnlocked()
+                if (tracking) invalidate()
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (tracking) {
+                    currentY = event.y
+                    invalidate()
+                }
                 return true
             }
 
@@ -679,6 +719,8 @@ private class AlarmDismissGestureView(
                     minimumUpwardDistanceDp = AlarmDismissGesturePolicy.MIN_UPWARD_DISTANCE_DP * density,
                 )
                 tracking = false
+                currentY = downY
+                invalidate()
                 if (shouldDismiss) {
                     performClick()
                     dismiss()
@@ -686,7 +728,11 @@ private class AlarmDismissGestureView(
                 return true
             }
 
-            MotionEvent.ACTION_CANCEL -> tracking = false
+            MotionEvent.ACTION_CANCEL -> {
+                tracking = false
+                currentY = downY
+                invalidate()
+            }
         }
         return true
     }
@@ -706,7 +752,7 @@ private class AlarmDismissGestureView(
     private fun updateState() {
         alpha = if (isUnlocked()) 1f else 0.72f
         contentDescription = if (isUnlocked()) {
-            "위로 밀어 알람 종료"
+            "위로 스와이프하여 잠금해제"
         } else {
             "타이머 완료 전에는 알람을 종료할 수 없음"
         }
