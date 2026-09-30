@@ -20,7 +20,7 @@
 
 - **최신 버전**: [`v0.15.23` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.23)
 - **정식 APK 다운로드**: [LockAlarm-v0.15.23.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.23/LockAlarm-v0.15.23.apk)
-- **APK SHA-256**: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
+- **APK SHA-256**: `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`
 - **인증서 서명 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
 
 > 💡 **설치 안내**: 기존 개발용 빌드가 설치되어 있는 기기에서는 서명 불일치로 업데이트가 실패할 수 있습니다. 설치 문제 해결 및 상세 절차는 [설치 문제 확인 (INSTALLATION.md)](docs/INSTALLATION.md)을 참고하세요.

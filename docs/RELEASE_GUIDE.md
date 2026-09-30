@@ -64,7 +64,7 @@ JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 4. 시험 배포라면 GitHub Release에서 **Pre-release**를 선택합니다. 개인 서명키 파일은 첨부하지 않습니다.
 5. 공개 후 GitHub 자산의 SHA-256과 태그 대상 커밋을 다시 확인합니다.
 
-이번 공개 결과: [Pre-release `v0.15.22`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22), 태그 대상 커밋 `5a137778e1cbe832c0e7ea49b8c2b287be52f9f8`. 공개 APK SHA-256은 `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`로 로컬 검증값과 일치합니다.
+이번 공개 결과: [Pre-release `v0.15.23`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.23). 공개 APK SHA-256은 `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`로 로컬 검증값과 일치합니다. (이전 릴리스: `v0.15.22` / `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`)
 
 Pre-release는 지금 내려받을 수 있는 공개 시험판입니다. 실기기 검증을 끝내기 전에는 안정판으로 표시하지 않습니다. 검증 후 같은 릴리스의 Pre-release 표시를 해제해 안정판으로 전환할 수 있습니다. 이후 버전의 공개 게시 전에는 게시 범위와 테스트 결과를 다시 확인합니다.
 

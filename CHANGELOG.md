@@ -11,8 +11,12 @@
 
 ### 검증
 
-- `testDebugUnitTest`: JVM 단위 테스트 146건 통과 (실패 0건)
-- `assembleDebug`: 빌드 성공
+- `testReleaseUnitTest`: JVM 단위 테스트 146건 통과 (실패 0건)
+- `lintRelease`: 성공
+- `assembleRelease`: 정식 서명 APK 빌드 성공
+- 정식 서명 인증서: `CN=LockAlarm`, SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
+- 정식 APK SHA-256: `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`
+- 2026-09-30 GitHub Pre-release `v0.15.23` 공개
 
 ## 0.15.22 — GitHub Pre-release 공개
 
