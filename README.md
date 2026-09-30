@@ -1,5 +1,8 @@
 # LockAlarm
 
+![Tests](https://img.shields.io/badge/tests-146%20passed-brightgreen?style=flat-square)
+![Release](https://img.shields.io/badge/release-v0.15.22-blue?style=flat-square)
+
 정해진 시각에 로컬 미디어 또는 공식 YouTube 플레이어를 띄우는 개인용 Android 알람 앱입니다.
 
 알람이 울리면 화면 밝기와 미디어 음량을 초기값으로 한 번 적용하고, 잠금 화면이나 다른 앱 위에서도 전체 화면을 유지합니다. 계정·서버·텔레메트리 없이 오프라인 우선으로 동작합니다.
