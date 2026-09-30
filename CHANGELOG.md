@@ -1,6 +1,18 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.22**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.22-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.22.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.23**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.23-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.23.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+
+## 0.15.23 — 알람 울림 화면 UI/UX 개선 및 잠금 해제 제스처 가이드 추가
+
+- 알람 울림 화면(AlarmOverlay)에서 스누즈(다시 울림) 버튼과 알람 끄기 버튼 사이의 간격을 대폭 확장하여 오조작을 방지했습니다.
+- 두 버튼 사이의 확장된 중앙 영역에 스와이프 제스처 바(`AlarmDismissGestureView`)를 배치하고 이중 상향 셰브론(︽), 직관적인 안내 문구("스와이프하여 잠금해제"), 하단 바 핸들을 추가했습니다.
+- 터치 드래그 시 실시간으로 바가 상승하는 시각적 피드백과 타이머 활성화 시 남은 시간 카운트다운 표시 기능을 통합했습니다.
+- `versionCode 38`, `versionName 0.15.23`으로 판올림.
+
+### 검증
+
+- `testDebugUnitTest`: JVM 단위 테스트 146건 통과 (실패 0건)
+- `assembleDebug`: 빌드 성공
 
 ## 0.15.22 — GitHub Pre-release 공개
 

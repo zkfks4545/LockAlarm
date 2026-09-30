@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Tests-146%20Passed-brightgreen?style=flat-square" alt="146 Tests Passed">
-  <img src="https://img.shields.io/badge/Release-v0.15.22-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Release-v0.15.23-blue?style=flat-square" alt="Release">
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
 </p>
 
@@ -18,8 +18,8 @@
 
 최신 정식 서명 빌드는 [GitHub Releases](https://github.com/zkfks4545/LockAlarm/releases)에서 바로 다운로드할 수 있습니다.
 
-- **최신 버전**: [`v0.15.22` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)
-- **정식 APK 다운로드**: [LockAlarm-v0.15.22.apk (8.7 MB)](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk)
+- **최신 버전**: [`v0.15.23` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.23)
+- **정식 APK 다운로드**: [LockAlarm-v0.15.23.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.23/LockAlarm-v0.15.23.apk)
 - **APK SHA-256**: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
 - **인증서 서명 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
 

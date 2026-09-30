@@ -1,15 +1,14 @@
 # 루틴 알람 버전·빌드 내역
 
-작성 기준: 2026-09-29 (Asia/Seoul)
+작성 기준: 2026-09-30 (Asia/Seoul)
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.22**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.23**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 37
-- `versionName`: `0.15.22`
-- 최신 개발용 APK: `outputs/routine-alarm-integrated-final-v15.22-debug.apk`
-- 최신 정식 서명 APK: [`LockAlarm-v0.15.22.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk) (GitHub Pre-release 공개, 원격 SHA-256 확인 완료)
+- `versionCode`: 38
+- `versionName`: `0.15.23`
+- 최신 정식 서명 배포 타깃: [`LockAlarm-v0.15.23.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.23/LockAlarm-v0.15.23.apk) (GitHub Pre-release 공개 예정)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역

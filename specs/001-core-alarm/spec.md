@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: 0.15.22 keeps new-alarm-first overlap preemption and one-way device media-volume recovery, makes home-toggle activation today-first even for stale automatically calculated dates, preserves explicit future dates, separates the upward swipe area from the bottom action row, and retains the separate daily repeat option; scheduling and session recovery remain in scope; real-device behavior is still open
+**Status**: 0.15.23 widens snooze-dismiss button gap with center swipe unlock gesture guide, keeps new-alarm-first overlap preemption and one-way device media-volume recovery, makes home-toggle activation today-first even for stale automatically calculated dates, preserves explicit future dates, and retains the separate daily repeat option; scheduling and session recovery remain in scope; real-device behavior is still open
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
