@@ -16,12 +16,8 @@ tools/codex-orchestrator/.env
 tools/codex-orchestrator/.env.*
 !tools/codex-orchestrator/.env.example
 
-# Keep only the explicitly published latest APK and development summary
-outputs/*.apk
-!outputs/routine-alarm-integrated-final-v15.22-debug.apk
-outputs/*.zip
-outputs/*.md
-!outputs/planning-and-slice-summary.md
+# Build artifacts and local test APKs (official releases are on GitHub Releases)
+outputs/
 
 # Keystore & Signing Secrets
 *.jks
@@ -34,6 +30,7 @@ signing.properties
 
 # Local agent execution records (may contain private build context)
 .agent/
+.agent-tasks/
 
 # OS/editor noise
 .DS_Store

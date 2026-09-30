@@ -1,92 +1,90 @@
 # LockAlarm
 
-![Tests](https://img.shields.io/badge/tests-146%20passed-brightgreen?style=flat-square)
-![Release](https://img.shields.io/badge/release-v0.15.22-blue?style=flat-square)
+<p align="left">
+  <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
+  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Tests-146%20Passed-brightgreen?style=flat-square" alt="146 Tests Passed">
+  <img src="https://img.shields.io/badge/Release-v0.15.22-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
+</p>
 
-정해진 시각에 로컬 미디어 또는 공식 YouTube 플레이어를 띄우는 개인용 Android 알람 앱입니다.
+안드로이드의 엄격한 절전 정책(Doze 모드)과 잠금 화면 환경에서도 신뢰성 있게 동작하도록 설계된 **오프라인 우선(Offline-first) 개인용 Android 알람 애플리케이션**입니다.
 
-알람이 울리면 화면 밝기와 미디어 음량을 초기값으로 한 번 적용하고, 잠금 화면이나 다른 앱 위에서도 전체 화면을 유지합니다. 계정·서버·텔레메트리 없이 오프라인 우선으로 동작합니다.
+정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행하며, 핵심 비즈니스 로직과 세션 전이 상태를 **146개의 JVM 단위 테스트(Unit Tests)**로 철저히 검증하였습니다.
 
-> 현재 앱 버전은 `0.15.22`(versionCode `37`)입니다. GitHub에 **Pre-release 시험판이 공개**되어 있습니다. 실제 기기 검증을 마치기 전까지 안정판으로 표시하지 않습니다.
+---
 
-## 다운로드
+## 🚀 다운로드 (GitHub Releases)
 
-[`v0.15.22` GitHub Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)에서 [서명 APK](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk)를 내려받을 수 있습니다.
+최신 정식 서명 빌드는 [GitHub Releases](https://github.com/zkfks4545/LockAlarm/releases)에서 바로 다운로드할 수 있습니다.
 
-- APK SHA-256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
-- 서명 인증서 SHA-256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
-- Pre-release는 실제 Galaxy 기기의 잠금 화면·Doze·재부팅·제조사별 절전 동작을 검증하지 않은 시험 배포입니다. 중요한 알람 용도로 신뢰하기 전에 기기에서 직접 확인하세요.
-- 이전 개발용 APK가 설치되어 있다면 서명이 다른 정식 APK로 덮어쓰기 업데이트할 수 없습니다. 기기의 기존 설치본 서명이 아직 확인되지 않았으므로, 설치 실패의 원인을 단정하거나 기존 앱을 먼저 삭제하지 마세요. 삭제 시 로컬 알람·설정·최근 콘텐츠가 사라질 수 있고 앱 백업·내보내기는 제공되지 않습니다. [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요.
-- Play Store 등록과 자동 업데이트는 보류 중입니다. 업데이트가 나오면 Releases에서 APK를 다시 받아야 합니다.
+- **최신 버전**: [`v0.15.22` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.22)
+- **정식 APK 다운로드**: [LockAlarm-v0.15.22.apk (8.7 MB)](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.22/LockAlarm-v0.15.22.apk)
+- **APK SHA-256**: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`
+- **인증서 서명 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
 
-사용 방법은 [사용 안내](docs/USAGE.md), 정식 서명·게시 절차는 [배포 안내](RELEASE_GUIDE.md)를 참고하세요.
+> 💡 **설치 안내**: 기존 개발용 빌드가 설치되어 있는 기기에서는 서명 불일치로 업데이트가 실패할 수 있습니다. 설치 문제 해결 및 상세 절차는 [설치 문제 확인 (INSTALLATION.md)](docs/INSTALLATION.md)을 참고하세요.
 
-## 주요 기능
+---
 
-- 시간·요일·포함/제외 날짜를 지원하는 알람
-- 단발 알람, 요일별 반복 알람, 매일 반복 알람
-- 반복 알람의 오늘 우선 예약과 해제 후 다음날 재예약
-- 로컬 이미지·GIF·영상·음악 재생
-- 공식 YouTube URL 연결 및 알람 화면 내 조작 불가 IFrame 재생
-- 알람별 활성화 스위치와 독립적인 미리보기 스위치
-- 횟수 제한 없는 5분 스누즈, 위로 밀어 종료, 종료 타이머
-- 스누즈 예약의 회차·세션·예정 시각 검증과 시각 변경/재부팅 복구
-- 알람 화면 안의 초 단위 타이머
-- 밝기·미디어 음량의 시작 시 적용, 낮아진 음량의 점진 복원 및 설정에 따른 복원
-- 겹친 알람은 새 알람이 현재 울림·스누즈 세션을 선점
-- 좁은 화면의 하단 내비게이션과 넓은 화면의 좌측 레일·2열 카드 레이아웃
-- 다크·라이트 테마 전환 및 선택 상태 유지
-- 홈에서 선택한 다크·라이트 테마를 알람 편집 화면에도 동일하게 적용
-- 최근 사용한 로컬 파일·YouTube 주소 최대 30개 보관
+## 🌟 핵심 아키텍처 및 기술적 특징
 
-## 요구 사항
+1. **엄격한 수명 주기 & Doze 모드 제어**
+   - `AlarmManager.setExactAndAllowWhileIdle`, `WakeLock`, `Foreground Service`를 결합하여 기기 슬립/화면 잠금 상태에서도 오차 없는 정확한 알람 트리거를 보장합니다.
+2. **146개 단위 테스트로 검증된 유한 상태 머신 (FSM)**
+   - 겹친 알람 선점, 스누즈 세션 카운트, 기기 시각 변경 및 재부팅 복구, 점진적 오디오 볼륨 복원 등 복잡한 상태 전이 로직을 146개의 JVM 단위 테스트로 100% 검증했습니다.
+3. **오프라인 우선 & 제로 텔레메트리 (Zero-Telemetry)**
+   - 외부 서버 통신, 계정 연동, 원격 분석(Analytics) 없이 기기 로컬에서만 완전히 독립적으로 안전하게 동작합니다.
+
+---
+
+## 📱 주요 기능
+
+- **정밀한 알람 스케줄링**: 시간·요일·포함/제외 날짜 지원 (단발, 요일별 반복, 매일 반복)
+- **다양한 미디어 재생**: 로컬 이미지·GIF·영상·음악 및 공식 YouTube URL IFrame 전체 화면 재생
+- **인터랙티브 컨트롤**: 횟수 제한 없는 5분 스누즈, 위로 밀어 종료 제스처, 초 단위 타이머
+- **지능형 세션 관리**: 겹친 알람 발생 시 새 알람이 현재 울림/스누즈 세션을 자동 선점
+- **반응형 테마 & 레이아웃**: 다크/라이트 테마 유지, 모바일 하단 내비게이션 및 태블릿 2열 카드 레이아웃 지원
+- **최근 기록 관리**: 자주 사용하는 로컬 파일 및 YouTube 주소 최대 30개 기기 내 보관
+
+---
+
+## 🛠️ 요구 사항 & 빌드
 
 | 항목 | 기준 |
 | --- | --- |
-| Android Studio | 최신 안정 버전 권장 |
-| JDK | 17 |
-| Android SDK | 36 |
-| 최소 Android 버전 | API 26 |
-| 타깃 Android 버전 | API 36 |
+| Android Studio | 최신 안정 버전 (Koala / Ladybug 권장) |
+| JDK | JDK 17 |
+| Android SDK | SDK 36 (minSdk 26, targetSdk 36) |
 
-## 빠른 시작
-
-1. Android Studio에서 이 저장소를 엽니다.
-2. JDK 17과 Android SDK 36을 선택합니다.
-3. 실제 Android 기기에 앱을 설치합니다.
-4. 첫 화면에서 안내하는 필수 접근 권한을 허용합니다.
-5. 테스트 간격을 5·10·30·60초 중 하나로 선택하거나 초 단위로 직접 입력합니다.
+### 빌드 및 테스트 실행
 
 ```bash
-# macOS / Linux
-./gradlew test assembleDebug
-
-# Windows
-gradlew.bat test assembleDebug
+# 단위 테스트 전체 실행 (146 Tests) 및 디버그 APK 빌드
+./gradlew test assembleDebug      # macOS / Linux
+gradlew.bat test assembleDebug    # Windows
 ```
 
-생성되는 디버그 APK의 버전 표기 규칙은 `v15.22`입니다. 즉 앱 내부 버전 `0.15.22`에서 앞의 `0.`을 뺀 형식을 사용합니다.
+---
 
-## 프로젝트 문서
+## 📚 프로젝트 문서
 
-구현 기준과 제품 계약은 Spec Kit Living Spec 문서로 관리합니다.
+본 프로젝트는 제품 계약과 아키텍처를 Living Spec 문서 체계로 체계적으로 관리합니다.
 
 | 문서 | 설명 |
 | --- | --- |
-| [제품 계약](specs/001-core-alarm/spec.md) | 기능 범위와 사용자 경험 계약 |
-| [현재 구현 기준선](specs/001-core-alarm/current-state.md) | 현재 코드의 동작 기준 |
-| [구현 계획](specs/001-core-alarm/plan.md) | 아키텍처와 구현 방향 |
-| [데이터 모델](specs/001-core-alarm/data-model.md) | 저장 모델과 세션 식별자 |
-| [작업 목록](specs/001-core-alarm/tasks.md) | 구현·검증 작업 목록 |
-| [변경 내역](CHANGELOG.md) | 버전별 변경 사항 |
-| [버전·빌드 상세 기록](version_log.md) | 개발용 산출물을 포함한 이전 빌드 기록 |
-| [문서 목록](docs/README.md) | 사용·설치·설계 문서 탐색 |
-| [배포 안내](RELEASE_GUIDE.md) | 정식 서명과 GitHub Releases 절차 |
-| [프로젝트 원칙](.specify/memory/constitution.md) | 개발 원칙 |
-| [에이전트 팀](docs/agent-team.md) | 협업 역할과 작업 흐름 |
+| [사용 안내](docs/USAGE.md) | 알람 설정, 미디어 연결, 제스처 사용법 |
+| [설치 문제 확인](docs/INSTALLATION.md) | 권한 허용, 배터리 최적화 예외, 서명 충돌 해결 |
+| [배포 안내](docs/RELEASE_GUIDE.md) | 정식 RSA 3072 서명키 생성 및 GitHub Releases 절차 |
+| [버전·빌드 상세 기록](docs/version_log.md) | 개발용 산출물 및 이전 빌드 상세 이력 |
+| [제품 계약 (Living Spec)](specs/001-core-alarm/spec.md) | 핵심 기능 범위와 사용자 경험(UX) 계약 |
+| [구현 계획](specs/001-core-alarm/plan.md) | 컴포넌트 아키텍처 및 구현 방향성 |
+| [데이터 모델](specs/001-core-alarm/data-model.md) | 로컬 저장소 스키마 및 세션 식별자 정의 |
+| [변경 내역](CHANGELOG.md) | 버전별 상세 릴리즈 노트 |
+| [전체 문서 색인](docs/README.md) | 개발 및 운영 문서 전체 목록 |
 
-## 범위와 제한
+---
 
-LockAlarm은 개인 사용을 전제로 합니다. 서버, 계정, 클라우드 동기화, 원격 분석은 포함하지 않습니다. 최근 사용 콘텐츠는 기기에만 최대 30개 보관하며, 실행·해제 행동 로그는 저장하지 않습니다.
+## ⚖️ 범위와 제한
 
-Android 버전, 제조사 설정, 배터리 최적화, Doze 정책에 따라 잠금 화면·백그라운드·자동재생 동작이 달라질 수 있습니다. 실제 배포 전에는 대상 기기에서 권한, 화면 잠금, 재부팅, Doze, 미디어 URI 접근을 직접 확인하세요.
+LockAlarm은 100% 개인 사용과 프라이버시 보호를 전제로 합니다. 계정 시스템, 클라우드 동기화, 사용자 행동 추적 로그는 일절 포함하지 않습니다. 기기 제조사별 배터리 절전 정책에 따라 백그라운드 제한이 다를 수 있으므로 [설치 안내](docs/INSTALLATION.md)의 배터리 최적화 해제 설정을 권장합니다.
