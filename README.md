@@ -16,12 +16,14 @@
 
 ## 🚀 다운로드 (GitHub Releases)
 
-최신 정식 서명 빌드는 [GitHub Releases](https://github.com/zkfks4545/LockAlarm/releases)에서 바로 다운로드할 수 있습니다.
+최신 정식 서명 APK는 GitHub **Pre-release**에서 다운로드할 수 있습니다. 중요한 알람에 사용하기 전에는 본인 기기에서 직접 시험하세요.
 
 - **최신 버전**: [`v0.15.24` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)
-- **APK 다운로드**: [outputs / Releases 페이지](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)에서 제공
+- **APK 다운로드**: [LockAlarm-v0.15.24.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk)
+- **APK SHA-256**: `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`
+- **서명 인증서 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (v0.15.23 정식 배포본과 동일)
 
-> 💡 **설치 안내**: 기존 개발용 빌드가 설치되어 있는 기기에서는 서명 불일치로 업데이트가 실패할 수 있습니다. 설치 문제 해결 및 상세 절차는 [설치 문제 확인 (INSTALLATION.md)](docs/INSTALLATION.md)을 참고하세요.
+> ⚠️ **2026-10-06 배포 수정**: v0.15.24에 처음 첨부된 `...debug.apk`는 잘못된 개발용 서명 파일이어서 제거했습니다. 이전에 받았다면 위 정식 APK를 다시 받으세요. 개발용 APK가 이미 설치된 기기는 서명이 달라 덮어쓰기 업데이트가 되지 않으며, 앱 삭제 시 알람 데이터가 지워질 수 있습니다. [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요.
 
 ---
 

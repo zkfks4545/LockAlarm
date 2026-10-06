@@ -10,13 +10,21 @@
 - 알람 편집 화면에서 YouTube URL 입력 시 감지된 영상 길이 레이블 표시 및 실시간 상한선 자동 리사이징을 적용했습니다.
 - `versionCode 39`, `versionName 0.15.24`로 판올림.
 
+### 정식 배포 수정 (2026-10-06)
+
+- 최초 GitHub Pre-release에 개발용 서명 APK가 잘못 첨부되어 기존 정식 설치본에서 덮어쓰기 업데이트할 수 없었습니다. 해당 자산을 제거하고, v0.15.23 정식 배포본과 동일한 `CN=LockAlarm` 인증서의 APK로 교체했습니다. 태그·앱 버전 코드는 변경하지 않았습니다.
+- 정식 APK: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk), SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`.
+- 정식 서명 인증서 SHA-256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`.
+- `testReleaseUnitTest`: 149건 통과, 실패·오류·건너뜀 0건. `lintRelease`·`assembleRelease` 성공. 공개 APK를 다시 다운로드해 해시·서명·패키지 버전을 확인했습니다. 실기기 알람 동작은 별도 검증이 필요합니다.
+- 최초 개발용 APK를 이미 설치한 경우에는 정식 서명 APK로 제자리 업데이트할 수 없습니다. 앱 삭제는 로컬 알람 데이터를 지우므로, 먼저 데이터를 보존할 방법을 결정해야 합니다.
+
 ### 검증
 
 - `testDebugUnitTest`: JVM 단위 테스트 149건 통과 (실패 0건)
 - `assembleDebug`: 빌드 성공
 - APK: `outputs/routine-alarm-integrated-final-v15.24-debug.apk`
 - SHA-256: `23AB415423D31ABE9D33E4589A7C216C96668A64B27BE048793912BBB5C0FA73`
-- 2026-10-06 GitHub Pre-release `v0.15.24` 공개
+- 2026-10-06 GitHub Pre-release `v0.15.24` 최초 공개. 위 항목은 이후 정식 서명 자산으로 수정한 기록입니다.
 
 ## 0.15.23 — 알람 울림 화면 UI/UX 개선 및 잠금 해제 제스처 가이드 추가
 

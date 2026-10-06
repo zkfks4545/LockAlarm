@@ -8,14 +8,14 @@
 
 - `versionCode`: 39
 - `versionName`: `0.15.24`
-- 최신 배포 타깃: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24) (GitHub Pre-release)
+- 최신 배포 타깃: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역
 
 | 버전 | 주요 개선 | 검증 결과 | APK |
 |---|---|---|---|
-| 0.15.24 | YouTube 영상 길이 IFrame API 자동 감지 및 잠금 타이머 상한선 300초 확장, Room DB 8 마이그레이션 | JVM 단위 테스트 149건 통과, `assembleDebug` 성공; SHA-256 `23AB415423D31ABE9D33E4589A7C216C96668A64B27BE048793912BBB5C0FA73` | `routine-alarm-integrated-final-v15.24-debug.apk` |
+| 0.15.24 | YouTube 영상 길이 IFrame API 자동 감지 및 잠금 타이머 상한선 300초 확장, Room DB 8 마이그레이션 | 정식 빌드 JVM 테스트 149건, `lintRelease`·`assembleRelease` 성공; 공개 정식 APK SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`. 최초 잘못 첨부한 개발용 APK(SHA-256 `23AB415423D31ABE9D33E4589A7C216C96668A64B27BE048793912BBB5C0FA73`)는 제거 | `LockAlarm-v0.15.24.apk` |
 | 초기 MVP | 1회성 정확 알람, `AlarmManager.setAlarmClock()`, 포그라운드 서비스, 잠금화면 전체화면 알람, 밝기·음량 저장/복원, 로컬 미디어 재생 | 최초 MVP 산출물 | `routine-alarm-mvp-debug.apk` |
 | D-Snooze | 동일 세션을 유지하는 5분 스누즈와 재알람 예약 흐름 | 스누즈 기능 검증 산출물 | `routine-alarm-d-snooze-debug.apk` |
 | 초기 통합 v2~v4 | Room 기반 복수 알람, 기존 알람 마이그레이션, 단발·요일 반복·포함/제외 날짜, 중복 전달 방지, 부팅·시간 변경 후 재예약, 밝기·음량 세션 정책, YouTube 공식 IFrame 재생 | 버전별 상세 변경사항은 별도 기록되지 않음 | `routine-alarm-integrated-final-v2/v3/v4-debug.apk` |

@@ -1,6 +1,6 @@
 # LockAlarm GitHub 배포 및 서명키 운영
 
-현재 버전은 **0.15.24 / 코드 39**입니다. YouTube 영상 길이 자동 감지, 잠금 타이머 상한선 300초 확장 및 단위 테스트 149건 통과를 검증하였습니다. 정식 서명 APK 생성은 `tools/release.ps1 -Action Build`를 통해 로컬에서 안전하게 생성합니다.
+현재 버전은 **0.15.24 / 코드 39**입니다. YouTube 영상 길이 자동 감지와 잠금 타이머 상한선 300초 확장이 포함됩니다. 2026-10-06 GitHub Pre-release에 처음 첨부된 개발용 APK는 기존 정식 설치본과 서명이 달라 제거했고, 동일 버전의 정식 서명 APK로 교체했습니다. 정식 APK의 실기기 알람 동작은 아직 확인하지 않았습니다.
 
 > 정식 키는 생성됐고, 프로젝트의 `key/` 백업 폴더는 Git에서 제외됩니다. 키·백업·비밀번호는 GitHub나 채팅에 올리지 마세요. 비밀번호는 로컬 숨김 입력에만 입력합니다. 개발용 설치본과 정식 APK는 서명이 다르므로 덮어쓰기 설치를 가정하지 마세요. 앱 삭제는 로컬 알람 데이터를 지울 수 있습니다. 서명 자체가 Play Protect 경고 제거를 보장하지 않으며 보안 경고를 일괄 무시하지 마세요.
 
@@ -33,7 +33,7 @@ pwsh -NoProfile -File .\tools\release.ps1 -Action Build
 4. APK 서명 검증, 개발용 인증서·debuggable 여부 검사, 패키지·버전 및 SHA256 출력을 수행합니다.
 5. 추가한 환경 변수를 복원합니다. 업로드·태그·커밋은 수행하지 않습니다.
 
-출력 원본: `app/build/outputs/apk/release/app-release.apk`. 이번 배포용 파일은 `LockAlarm-v0.15.22.apk`로 이름을 붙였으며 SHA-256은 `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`입니다. 빌드와 서명 검증이 모두 성공해야 게시합니다.
+출력 원본: `app/build/outputs/apk/release/app-release.apk`. v0.15.24 공개 파일 이름은 [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk), SHA-256은 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`입니다. 개발용 `outputs/*-debug.apk`와 구분하고, 빌드·서명·패키지 버전 검증을 모두 마친 파일만 게시합니다.
 
 Gradle은 LOCKALARM_STORE_FILE, LOCKALARM_STORE_PASSWORD, LOCKALARM_KEY_ALIAS, LOCKALARM_KEY_PASSWORD 환경 변수를 읽습니다. 값 자체는 소스에 넣지 않습니다. 키 정보가 없으면 릴리스 패키징을 실패 처리합니다. 단위 테스트는 키 없이 별도로 실행할 수 있습니다.
 
@@ -43,7 +43,7 @@ Gradle은 LOCKALARM_STORE_FILE, LOCKALARM_STORE_PASSWORD, LOCKALARM_KEY_ALIAS, L
 
 JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 
-이미 이전 개발용 APK가 설치된 기기에서 정식 APK를 실행하면, Play Protect 경고 다음에 “앱이 설치되지 않았습니다”가 나타날 수 있습니다. 공개 APK의 해시·서명은 로컬 릴리스 APK와 일치하지만, **해당 기기에 설치된 앱의 서명과 설치 오류 코드는 아직 확인하지 못했습니다.** 이전 설치본이 Debug 키라면 다른 정식 키로 덮어쓰기 업데이트할 수 없는 것이 유력한 원인입니다. 경고 자체와 이후 설치 실패를 같은 원인으로 단정하지 마세요. 데이터 유실을 피하려면 앱 삭제 전에 [설치 문제 확인](docs/INSTALLATION.md)의 절차를 따르세요.
+이미 개발용 APK가 설치된 기기에서는 정식 APK로 덮어쓰기 업데이트할 수 없습니다. 특히 v0.15.24의 초기 잘못된 개발용 자산을 설치했다면 새 정식 APK로 제자리 업데이트할 수 없으며, 앱을 삭제하면 알람 데이터가 지워질 수 있습니다. Play Protect 경고와 서명 불일치 설치 실패는 구분해야 합니다. [설치 문제 확인](INSTALLATION.md)을 참고하세요.
 
 - 정식 APK 설치와 필수 권한 안내
 - 단발·반복 알람, 스누즈·해제, 재부팅 후 예약
@@ -56,15 +56,15 @@ JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 
 대상: [zkfks4545/LockAlarm](https://github.com/zkfks4545/LockAlarm).
 
-2026-09-29 `v0.15.22`를 공개했습니다. 다음 릴리스에도 아래 절차를 반복합니다.
+2026-09-29부터 GitHub Pre-release를 공개하고 있습니다. 다음 릴리스에는 아래 절차를 반복합니다.
 
 1. 릴리스에 필요한 코드·문서만 검토하고 커밋합니다. `.agent/`, `.agent-tasks/`, 키, 비밀번호, 로컬 설정 및 빌드 APK는 Git 커밋에서 제외합니다.
-2. 버전 태그와 서명 APK를 확인하고, 기존 태그를 임의로 이동하지 않습니다.
-3. 공개 서명 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`, APK SHA-256 및 검증·미검증 사항을 릴리스 노트에 기록합니다.
-4. 시험 배포라면 GitHub Release에서 **Pre-release**를 선택합니다. 개인 서명키 파일은 첨부하지 않습니다.
-5. 공개 후 GitHub 자산의 SHA-256과 태그 대상 커밋을 다시 확인합니다.
+2. `tools/release.ps1 -Action Build`를 실행해 사용자가 비밀번호를 직접 입력합니다. 결과 APK가 `com.routinealarm.app`, 의도한 versionName/versionCode이며 `application-debuggable`이 없는지 확인합니다.
+3. `apksigner verify --print-certs`로 **이전 정식 배포본과 동일한** 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`인지 대조합니다. `CN=LockAlarm` 이름이나 “Debug가 아님”만으로는 충분하지 않습니다.
+4. 검증된 `app/build/outputs/apk/release/app-release.apk`만 버전별 `LockAlarm-v<version>.apk` 자산으로 게시합니다. `outputs/*-debug.apk`는 GitHub Release에 첨부하지 않습니다. 버전 태그를 임의로 이동하거나 개인 서명키를 첨부하지 않습니다.
+5. 공개 후 자산을 GitHub에서 다시 내려받아 파일 SHA-256·서명 지문·패키지 버전을 검증하고, 이를 릴리스 노트에 기록합니다. 시험 배포라면 **Pre-release** 표시와 실기기 미검증 범위를 유지합니다.
 
-이번 공개 결과: [Pre-release `v0.15.23`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.23). 공개 APK SHA-256은 `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`로 로컬 검증값과 일치합니다. (이전 릴리스: `v0.15.22` / `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`)
+이번 공개 결과: [Pre-release `v0.15.24`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24). 처음에는 개발용 서명 자산이 올라갔으나 2026-10-06에 제거하고 정식 서명 APK 하나로 교체했습니다. 공개 APK SHA-256은 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`, 서명 인증서 SHA-256은 위의 기존 정식 지문과 같습니다. 원격 파일을 다시 다운로드해 일치 여부를 확인했습니다. 이전 릴리스: `v0.15.23` / `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`.
 
 Pre-release는 지금 내려받을 수 있는 공개 시험판입니다. 실기기 검증을 끝내기 전에는 안정판으로 표시하지 않습니다. 검증 후 같은 릴리스의 Pre-release 표시를 해제해 안정판으로 전환할 수 있습니다. 이후 버전의 공개 게시 전에는 게시 범위와 테스트 결과를 다시 확인합니다.
 
