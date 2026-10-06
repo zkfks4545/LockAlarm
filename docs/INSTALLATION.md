@@ -4,8 +4,9 @@
 
 ## 현재 확인된 내용
 
-- 현재 공개된 [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk)는 로컬 정식 서명 APK와 SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`으로 일치합니다. 서명 인증서 SHA-256은 이전 v0.15.22·v0.15.23 정식 배포본과 동일한 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`입니다.
+- 현재 공개된 [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk)는 로컬 정식 서명 APK와 SHA-256 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`으로 일치합니다. 서명 인증서 SHA-256은 이전 v0.15.22·v0.15.23 정식 배포본과 동일한 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`입니다. 2026-10-06에 같은 버전의 자산을 다시 교체했으므로 이전에 받은 파일은 해시를 확인해 주세요.
 - 2026-10-06 v0.15.24에 처음 첨부된 `routine-alarm-integrated-final-v15.24-debug.apk`는 Android Debug 인증서 SHA-256 `1E5C10DF0DF1E6147EA4A77377DE3E0D33486899419FDE5CD6FCFFF17CF4E7E4`로 서명돼 있었습니다. 이 잘못된 자산은 제거했으며, 이미 다운로드한 파일은 정식 APK로 다시 받아야 합니다.
+- 이번 교체본은 기존 정식 v0.15.24와 `versionCode 39`가 같습니다. 새 버전 번호가 아니므로 자동 업데이트 알림을 기대하지 말고 새 APK를 직접 받아 설치해야 합니다. 같은 서명키를 사용하지만, 특정 기기의 제자리 설치 성공은 아직 검증하지 않았습니다. 설치 문제를 해결하려고 기존 앱부터 삭제하지 마세요.
 - 사용자가 본 Play Protect 경고와, 그 뒤에 나타난 “앱이 설치되지 않았습니다”는 구별해서 확인해야 합니다. 경고 화면만으로 설치 실패의 정확한 원인을 알 수 없습니다.
 
 ## 현재 가장 유력한 가설

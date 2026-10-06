@@ -29,12 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.routinealarm.app.media.AlarmMediaDuration
 
 @Composable
 fun YouTubePreview(
     value: String,
     modifier: Modifier = Modifier,
     onDurationChanged: ((Int) -> Unit)? = null,
+    playLabel: String = "▶ 재생",
 ) {
     when (YouTubeEmbed.previewState(value)) {
         YouTubePreviewState.EMPTY -> PreviewMessage(
@@ -64,10 +66,8 @@ fun YouTubePreview(
                                 value = value,
                                 modifier = Modifier.fillMaxSize(),
                                 onDurationChanged = { millis ->
-                                    val seconds = (millis / 1000).toInt()
-                                    if (seconds > 0) {
-                                        onDurationChanged?.invoke(seconds)
-                                    }
+                                    AlarmMediaDuration.durationSecondsFromMillis(millis)
+                                        ?.let { onDurationChanged?.invoke(it) }
                                 },
                             )
                         }
@@ -82,6 +82,7 @@ fun YouTubePreview(
                             .fillMaxWidth()
                             .height(200.dp),
                         onPlay = { isPlaying = true },
+                        playLabel = playLabel,
                     )
                 }
             }
@@ -154,10 +155,8 @@ fun YouTubeCardPreview(
                         value = value,
                         modifier = Modifier.fillMaxSize(),
                         onDurationChanged = { millis ->
-                            val seconds = (millis / 1000).toInt()
-                            if (seconds > 0) {
-                                onDurationChanged?.invoke(seconds)
-                            }
+                            AlarmMediaDuration.durationSecondsFromMillis(millis)
+                                ?.let { onDurationChanged?.invoke(it) }
                         },
                     )
                     TextButton(
@@ -194,6 +193,7 @@ private fun YouTubeThumbnail(
     value: String,
     modifier: Modifier,
     onPlay: () -> Unit,
+    playLabel: String = "▶ 재생",
 ) {
     val context = LocalContext.current
     key(value) {
@@ -210,7 +210,7 @@ private fun YouTubeThumbnail(
                 contentAlignment = Alignment.Center,
             ) {
                 Button(onClick = onPlay) {
-                    Text("▶ 재생")
+                    Text(playLabel)
                 }
             }
         }

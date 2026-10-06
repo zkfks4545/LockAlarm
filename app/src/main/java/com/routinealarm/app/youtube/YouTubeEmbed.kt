@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.routinealarm.app.alarm.AlarmPlaybackLease
@@ -120,6 +121,7 @@ object YouTubeEmbed {
               <script src="https://www.youtube.com/iframe_api"></script>
               <script>
                 var player;
+                var durationReported=false;
                 function showMessage(text){
                   var playerElement=document.getElementById('player');
                   var messageElement=document.getElementById('message');
@@ -149,7 +151,8 @@ object YouTubeEmbed {
                   try{
                     if(player && player.getDuration && window.RoutineAlarmBridge){
                       var duration = player.getDuration();
-                      if(duration && duration > 0){
+                      if(duration && duration > 0 && !durationReported){
+                        durationReported=true;
                         window.RoutineAlarmBridge.onDuration(String(duration));
                       }
                     }
@@ -171,7 +174,7 @@ object YouTubeEmbed {
                           window.RoutineAlarmBridge.onReady();
                           reportDuration();
                         }
-                        window.setInterval(reportPosition,500);
+                        window.setInterval(function(){reportPosition();reportDuration();},500);
                       },
                       onStateChange:function(e){
                         reportPosition();
@@ -352,11 +355,14 @@ fun YouTubePlayer(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     key(value) {
+        // Keep each WebView tied to its own video's callback, even if a queued
+        // JavaScript bridge result arrives after the URL has changed.
+        val currentOnDurationChanged = rememberUpdatedState(onDurationChanged)
         val webView = remember {
             createYouTubeWebView(
                 context = context,
                 value = value,
-                onDurationChanged = onDurationChanged,
+                onDurationChanged = { millis -> currentOnDurationChanged.value?.invoke(millis) },
             ).apply { tag = value }
         }
         AndroidView(
@@ -370,4 +376,3 @@ fun YouTubePlayer(
         }
     }
 }
-

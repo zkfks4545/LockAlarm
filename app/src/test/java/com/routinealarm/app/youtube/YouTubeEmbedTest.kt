@@ -97,6 +97,8 @@ class YouTubeEmbedTest {
         val html = requireNotNull(YouTubeEmbed.playerHtml("https://youtu.be/dQw4w9WgXcQ"))
         assertTrue(html.contains("reportDuration"))
         assertTrue(html.contains("RoutineAlarmBridge.onDuration"))
+        assertTrue(html.contains("reportPosition();reportDuration();"))
+        assertTrue(html.contains("durationReported=true"))
     }
 
     @Test

@@ -6,7 +6,7 @@
 - Room `recent_contents`: 실제로 저장하거나 실행한 고유 로컬 파일과 YouTube URL을 최신순 30개까지 유지한다. 행동 이벤트 로그는 저장하지 않는다.
 - Room `alarm_occurrences`: 정규 발생의 revision/occurrence/session 식별자와 `CLAIMED`, 호환용 `WAITING`, `FIRING`, `SNOOZED`, 종료 상태를 저장한다. 전달 수락과 겹침 조정은 이 테이블을 사용하는 단일 Room 트랜잭션에서 선점한다.
 - `SharedPreferences` `active_alarm_session`: 울림/스누즈 중 프로세스 복구에 필요한 활성 세션 하나만 동기적으로 저장한다.
-- Room 스키마 7은 `alarms.oneTimeDateUserSelected`로 1회성 날짜가 편집 화면에서 직접 선택됐는지 구분한다. 이전 스키마의 값은 `false`로 이관해 활성화 시 오늘 우선 규칙으로 다시 계산한다.
+- Room 스키마 7은 `alarms.oneTimeDateUserSelected`로 1회성 날짜가 편집 화면에서 직접 선택됐는지 구분한다. 이전 스키마의 값은 `false`로 이관해 활성화 시 오늘 우선 규칙으로 다시 계산한다. 현재 스키마 8은 `alarms.youtubeDurationSeconds`를 추가한다.
 - 계정, 서버 API, 클라우드 동기화, 원격 분석 저장소는 없다.
 
 `scheduleRevision`은 사용자 편집·활성 변경 때 증가하고 자동 반복 진행 때는 유지된다. 정규 예약은 `alarmId + scheduleRevision + triggerAt`에서 안정적인 `occurrenceId`와 `sessionId`를 만들며, 오래된 revision과 이미 선점된 occurrence는 Room 트랜잭션에서 거부한다.
@@ -27,7 +27,8 @@
 | `scheduleRevision` | 편집할 때 증가해 오래된 전달을 거부하는 값 |
 | `nextRegularAt` | 캐시된 다음 정규 실행 instant |
 | `dismissTimerEnabled` | 화면 잠금 타이머 사용 여부. 꺼짐이면 `dismissDelaySeconds`를 0으로 저장한다. |
-| `dismissDelaySeconds` | 우측 상단 원형 진행이 종료 조작으로 전환될 때까지의 지연. 켜짐 상태에서 0초부터 선택한 로컬 미디어 중 가장 긴 길이까지 설정하며, 길이 확인 불가 시 60초를 최대값으로 사용한다. |
+| `dismissDelaySeconds` | 우측 상단 원형 진행이 종료 조작으로 전환될 때까지의 지연. 로컬 미디어는 확인된 최대 길이까지, YouTube는 확인된 영상 길이 또는 미확인 시 임시 300초까지 설정한다. 그 밖의 길이 미확인 콘텐츠는 60초를 최대값으로 사용한다. |
+| `youtubeDurationSeconds` | 수동 미리보기에서 확인한 해당 알람의 YouTube 영상 길이. 저장한 알람의 울림 타이머에 재시작 후에도 적용한다. 영상 ID별 임시 재사용 캐시는 별도로 메모리에만 둔다. |
 | `devicePreset` | 밝기·미디어 음량 초기값과 복원 정책 |
 | `contentProfile` | 로컬 시각 URI와 선택 음악 URI를 저장하고 `LOCAL_AUDIO` → `VISUAL_MEDIA` → `DEFAULT_ALARM` 우선순위를 자동 해석하거나 YouTube 임베디드 설정을 표현 |
 

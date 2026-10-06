@@ -99,6 +99,7 @@ import com.routinealarm.app.ui.RoutineAlarmTheme
 import com.routinealarm.app.ui.AlarmVisual
 import com.routinealarm.app.ui.DeviceMediaLibraryScreen
 import com.routinealarm.app.youtube.YouTubeEmbed
+import com.routinealarm.app.youtube.YouTubeDurationCache
 import com.routinealarm.app.youtube.YouTubePreview
 import com.routinealarm.app.youtube.YouTubeThumbnailOnly
 import java.time.DayOfWeek
@@ -440,6 +441,17 @@ private fun RoutineAlarmApp(
             permissions = permissions,
             message = message,
             onAlarmChange = { editing = it },
+            onYouTubeDurationDetected = { sourceUrl, durationSeconds ->
+                val current = editing
+                if (current != null && current.contentMode == ContentMode.YOUTUBE &&
+                    current.youtubeUrl == sourceUrl && durationSeconds > 0
+                ) {
+                    YouTubeDurationCache.remember(sourceUrl, durationSeconds)
+                    if (current.youtubeDurationSeconds != durationSeconds) {
+                        editing = current.copy(youtubeDurationSeconds = durationSeconds)
+                    }
+                }
+            },
             onPickVisual = { mediaLibraryTab = MediaLibraryTab.IMAGE },
             onPickAudio = { mediaLibraryTab = MediaLibraryTab.MUSIC },
             onBack = {
@@ -1587,6 +1599,7 @@ private fun AlarmEditorScreen(
     permissions: PermissionState,
     message: String?,
     onAlarmChange: (AlarmSpec) -> Unit,
+    onYouTubeDurationDetected: (String, Int) -> Unit,
     onPickVisual: () -> Unit,
     onPickAudio: () -> Unit,
     onBack: () -> Unit,
@@ -1607,7 +1620,13 @@ private fun AlarmEditorScreen(
             AlarmMediaDuration.lookup(context, alarm)
         }
     }
-    val mediaDurationSeconds = mediaDurationResult?.maxDurationSeconds
+    // YouTube duration is already on the alarm; do not reuse a stale local lookup
+    // result while the URL is changing and accidentally clamp the timer.
+    val mediaDurationSeconds = if (alarm.contentMode == ContentMode.YOUTUBE) {
+        alarm.youtubeDurationSeconds?.takeIf { it > 0 }
+    } else {
+        mediaDurationResult?.maxDurationSeconds
+    }
     val dismissDelayMaxSeconds = DismissTimerPolicy.maxDelaySecondsForContent(
         contentMode = alarm.contentMode,
         mediaDurationSeconds = mediaDurationSeconds,
@@ -1932,14 +1951,15 @@ private fun AlarmEditorScreen(
                             Text(
                                 when {
                                     !alarm.dismissTimerEnabled -> "꺼짐 · 알람 시작 즉시 해제 가능"
-                                    mediaDurationResult == null && AlarmMediaDuration.hasDurationCandidate(alarm) ->
+                                    alarm.contentMode == ContentMode.LOCAL && mediaDurationResult == null &&
+                                        AlarmMediaDuration.hasDurationCandidate(alarm) ->
                                         "켜짐 · 미디어 길이 확인 중 (0초부터 설정 가능)"
                                     mediaDurationSeconds != null && alarm.contentMode == ContentMode.YOUTUBE ->
                                         "켜짐 · 0~${formatDurationLabel(mediaDurationSeconds)} 뒤 해제 버튼 활성화 (YouTube 영상 길이)"
                                     mediaDurationSeconds != null ->
                                         "켜짐 · 0~${formatDurationLabel(mediaDurationSeconds)} 뒤 해제 버튼 활성화"
                                     alarm.contentMode == ContentMode.YOUTUBE ->
-                                        "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (재생 시 영상 길이 자동 감지)"
+                                        "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (길이 미확인 · 미리보기 1회 재생 필요)"
                                     else ->
                                         "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (미디어 길이 확인 불가)"
                                 },
@@ -2077,9 +2097,12 @@ private fun AlarmEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             value = alarm.youtubeUrl.orEmpty(),
                             onValueChange = { newUrl ->
-                                val prevUrl = alarm.youtubeUrl.orEmpty()
-                                val resetDuration = if (newUrl != prevUrl) null else alarm.youtubeDurationSeconds
-                                onAlarmChange(alarm.copy(youtubeUrl = newUrl, youtubeDurationSeconds = resetDuration))
+                                val durationSeconds = YouTubeDurationCache.durationForSelection(
+                                    previousUrl = alarm.youtubeUrl.orEmpty(),
+                                    previousDurationSeconds = alarm.youtubeDurationSeconds,
+                                    nextUrl = newUrl,
+                                )
+                                onAlarmChange(alarm.copy(youtubeUrl = newUrl, youtubeDurationSeconds = durationSeconds))
                             },
                             label = { Text("YouTube URL") },
                             singleLine = true,
@@ -2088,10 +2111,9 @@ private fun AlarmEditorScreen(
                             value = alarm.youtubeUrl.orEmpty(),
                             modifier = Modifier.fillMaxWidth(),
                             onDurationChanged = { seconds ->
-                                if (alarm.youtubeDurationSeconds != seconds) {
-                                    onAlarmChange(alarm.copy(youtubeDurationSeconds = seconds))
-                                }
+                                onYouTubeDurationDetected(alarm.youtubeUrl.orEmpty(), seconds)
                             },
+                            playLabel = "▶ 미리보기 재생 · 길이 확인",
                         )
                         if (alarm.youtubeDurationSeconds != null) {
                             Text(
@@ -2101,7 +2123,7 @@ private fun AlarmEditorScreen(
                             )
                         } else {
                             Text(
-                                "공식 YouTube 임베디드 플레이어로 알람 화면 안에서 재생합니다. (미리보기를 재생하면 영상 길이가 자동 감지됩니다)",
+                                "길이를 확인하려면 미리보기를 한 번 재생해 주세요. 끝까지 볼 필요는 없습니다. 확인 전 최대값은 임시로 5분입니다.",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }

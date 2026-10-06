@@ -2,6 +2,14 @@
 
 이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.24**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.24-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.24.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
 
+## 0.15.24 동일 버전 교체 (2026-10-06) — YouTube 길이 확인 안내·영상 ID별 임시 재사용
+
+- YouTube URL 입력만으로 영상을 재생하지 않습니다. 길이 확인 전에는 잠금 타이머 최대값을 임시 5분으로 안내합니다.
+- 편집 화면의 미리보기 재생 버튼을 한 번 누르면 공식 IFrame 플레이어가 로드한 영상 길이를 읽습니다. 영상 전체를 재생할 필요는 없으며, 길이 확인 뒤 미리보기를 닫아도 됩니다.
+- 확인된 길이는 앱 프로세스가 살아 있는 동안 YouTube 영상 ID별 메모리 캐시에 임시로 기억해 같은 영상의 다른 URL 형식에도 재사용합니다. 다른 영상으로 바꾸면 이전 길이를 적용하지 않습니다. 저장한 알람의 길이는 기존처럼 해당 알람 정의에 남아 재시작 후 울림 타이머에도 적용됩니다.
+- `:app:testReleaseUnitTest` 152건 통과, `:app:lintRelease` 오류 0건, `:app:assembleRelease` 성공. 새 정식 APK SHA-256은 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`이며 서명 인증서는 이전 v0.15.24 정식 APK와 동일합니다. 실제 기기의 YouTube 길이 전달·타이머 UI 동작은 아직 검증하지 않았습니다.
+- 기존 정식 v0.15.24 APK SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`는 교체 전 파일의 보존 기록입니다. versionName `0.15.24`와 versionCode `39`는 유지합니다.
+
 ## 0.15.24 — YouTube 영상 길이 자동 감지 및 잠금 타이머 상한선 확장
 
 - YouTube 영상을 알람 미디어로 지정 시, IFrame Player API 브리지(`player.getDuration()`)를 통해 영상 길이를 자동 감지하여 화면 잠금 해제 타이머 상한선에 반영하도록 구현했습니다.
@@ -10,10 +18,10 @@
 - 알람 편집 화면에서 YouTube URL 입력 시 감지된 영상 길이 레이블 표시 및 실시간 상한선 자동 리사이징을 적용했습니다.
 - `versionCode 39`, `versionName 0.15.24`로 판올림.
 
-### 정식 배포 수정 (2026-10-06)
+### 최초 정식 서명 교체 기록 (2026-10-06, 현재 자산 아님)
 
 - 최초 GitHub Pre-release에 개발용 서명 APK가 잘못 첨부되어 기존 정식 설치본에서 덮어쓰기 업데이트할 수 없었습니다. 해당 자산을 제거하고, v0.15.23 정식 배포본과 동일한 `CN=LockAlarm` 인증서의 APK로 교체했습니다. 태그·앱 버전 코드는 변경하지 않았습니다.
-- 정식 APK: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk), SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`.
+- 당시 정식 APK SHA-256: `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E` (현재 배포 자산은 위 동일 버전 교체 기록 참조).
 - 정식 서명 인증서 SHA-256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`.
 - `testReleaseUnitTest`: 149건 통과, 실패·오류·건너뜀 0건. `lintRelease`·`assembleRelease` 성공. 공개 APK를 다시 다운로드해 해시·서명·패키지 버전을 확인했습니다. 실기기 알람 동작은 별도 검증이 필요합니다.
 - 최초 개발용 APK를 이미 설치한 경우에는 정식 서명 APK로 제자리 업데이트할 수 없습니다. 앱 삭제는 로컬 알람 데이터를 지우므로, 먼저 데이터를 보존할 방법을 결정해야 합니다.
