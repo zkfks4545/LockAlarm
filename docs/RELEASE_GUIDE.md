@@ -79,10 +79,18 @@ Play 계정·테스트 정책·비용은 실제 등록 시 최신 공식 안내�
 - 기존 APK: com.routinealarm.app, 0.15.22, 코드 37, 최소 SDK 26, 타깃 SDK 36, application-debuggable.
 - 기존 APK SHA256: 765F3148263B525F6940A28D92C9B9EB88028C8151471727955DFE19F5FD064F.
 - 기존 공개 인증서 SHA256: 1e5c10df0df1e6147ea4a77377de3e0d33486899419fde5cd6fcfff17cf4e7e4, 주체 Android Debug.
-- 정식 APK: `LockAlarm-v0.15.22.apk`, 8,772,356 bytes, 서명 인증서 주체 `CN=LockAlarm`.
-- 정식 APK SHA256: `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`.
-- 정식 공개 인증서 SHA256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`.
+- 정식 APK (0.15.22): `LockAlarm-v0.15.22.apk`, 8,772,356 bytes, 서명 인증서 주체 `CN=LockAlarm`, APK SHA256 `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`.
+- 정식 APK (0.15.23): `LockAlarm-v0.15.23.apk`, 8,772,356 bytes, 서명 인증서 주체 `CN=LockAlarm`, APK SHA256 `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`.
+- 정식 공개 인증서 SHA256 (모든 정식 릴리스 불변): `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (`CN=LockAlarm`).
+- 개발용 디버그 인증서 SHA256 (릴리스 에셋 배포 엄격 금지): `1E5C10DF0DF1E6147EA4A77377DE3E0D33486899419FDE5CD6FCFFF17CF4E7E4` (`CN=Android Debug`).
 - GitHub 배포 대상 저장소: [zkfks4545/LockAlarm](https://github.com/zkfks4545/LockAlarm).
+
+### 서명 불일치 방지 및 릴리즈 에셋 운영 불변 원칙
+
+기존 사용자가 데이터 유실 없이 앱을 업데이트하려면, GitHub Releases에 등록되는 배포 APK는 **반드시 `CN=LockAlarm` 정식 키로 서명된 `LockAlarm-v<version>.apk`**여야 합니다.
+개발용 디버그 키(`CN=Android Debug`)로 서명된 APK를 GitHub Releases에 올릴 경우 Android OS가 서명 불일치(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)로 설치를 영구 거부하므로, **GitHub 릴리즈 에셋에는 디버그 APK를 절대 업로드하지 않습니다.**
+정식 릴리즈 빌드는 반드시 `tools/release.ps1 -Action Build`를 통해 로컬에서 키 비밀번호를 입력받아 생성합니다.
+
 
 ### 2026-09-29 로컬 정식 빌드 검증
 

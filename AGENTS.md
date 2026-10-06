@@ -43,3 +43,19 @@ This file applies to the whole repository. It is the project-level contract for 
 - 권한 거부는 위임 취소가 아닙니다. 업무를 Antigravity 담당 `AWAITING_PERMISSION`으로 보존하고, 실제 CLI 권한 확인 후 명시적으로 재개합니다. 권한 우회·전역 일괄 승인은 하지 않습니다.
 - `completed`는 작업자 보고 제출 상태입니다. Codex의 diff·증거 검토와 Human 확인은 별도로 기록합니다. 미실행 테스트는 `NOT RUN`이며 실제 실행 결과의 건수를 사용합니다.
 - CLI의 전체 프로젝트 해시 검사가 실행되는 동안 같은 checkout에서 다른 파일도 동시 수정하지 않습니다. 병렬 구현은 분리 checkout 또는 파일 소유권이 명확한 수동 모드를 사용합니다. 커밋·푸시 등 외부 변경은 해당 업무에서 승인된 경우에만 수행합니다.
+
+## Release & Signing Contract (서명 인증서 및 배포 에셋 불변 규칙)
+
+- **공개 배포본 서명 인증서 (Release Key)**:
+  - 주체: `CN=LockAlarm`
+  - 인증서 SHA-256: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
+  - 키스토어 경로: `%LOCALAPPDATA%\LockAlarm\signing\lockalarm-release.jks`
+  - 별칭: `lockalarm-release`
+  - 빌드 도구: `tools/release.ps1 -Action Build` (비밀번호 숨김 입력)
+  - GitHub Releases 에셋 파일명: 반드시 `LockAlarm-v<version>.apk` 규칙 준수.
+- **개발/디버그 서명 인증서 (Debug Key - 릴리즈 배포 절대 금지)**:
+  - 주체: `CN=Android Debug, O=Android, C=US`
+  - 인증서 SHA-256: `1E5C10DF0DF1E6147EA4A77377DE3E0D33486899419FDE5CD6FCFFF17CF4E7E4`
+  - 용도: 로컬 개발 및 기기 디버깅 전용 (`outputs/routine-alarm-integrated-final-v<version>-debug.apk`).
+  - **주의**: GitHub Releases 에셋에 디버그 APK를 배포하면 기존 정식 사용자가 서명 불일치(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)로 업데이트할 수 없으므로, **GitHub 릴리즈 에셋에는 절대 디버그 APK를 업로드하지 않습니다.**
+
