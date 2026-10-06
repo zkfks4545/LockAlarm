@@ -42,8 +42,8 @@ android {
         applicationId = "com.routinealarm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 38
-        versionName = "0.15.23"
+        versionCode = 39
+        versionName = "0.15.24"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

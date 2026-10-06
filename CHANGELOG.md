@@ -1,6 +1,22 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.23**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.23-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.23.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.24**입니다. 개발용 APK는 `outputs/routine-alarm-integrated-final-v15.24-debug.apk`, 정식 서명 배포본은 `LockAlarm-v0.15.24.apk`이며, 두 산출물은 서명과 용도가 다릅니다. 1.0.0 전까지 개발용 APK 파일명은 `0.xx.xx`에서 `v<앞자리 없는 버전>-debug` 형식을 사용합니다.
+
+## 0.15.24 — YouTube 영상 길이 자동 감지 및 잠금 타이머 상한선 확장
+
+- YouTube 영상을 알람 미디어로 지정 시, IFrame Player API 브리지(`player.getDuration()`)를 통해 영상 길이를 자동 감지하여 화면 잠금 해제 타이머 상한선에 반영하도록 구현했습니다.
+- 영상 길이가 감지되지 않은 상태에서도 기본 잠금 시간 상한을 기존 60초에서 300초(5분)로 대폭 확장(`YOUTUBE_FALLBACK_MAX_DELAY_SECONDS = 300`)했습니다.
+- Room Database 버전 8 마이그레이션(`MIGRATION_7_8`)을 통해 `alarms` 테이블에 `youtubeDurationSeconds` 컬럼을 안전하게 추가하고 영속화했습니다.
+- 알람 편집 화면에서 YouTube URL 입력 시 감지된 영상 길이 레이블 표시 및 실시간 상한선 자동 리사이징을 적용했습니다.
+- `versionCode 39`, `versionName 0.15.24`로 판올림.
+
+### 검증
+
+- `testDebugUnitTest`: JVM 단위 테스트 149건 통과 (실패 0건)
+- `assembleDebug`: 빌드 성공
+- APK: `outputs/routine-alarm-integrated-final-v15.24-debug.apk`
+- SHA-256: `23AB415423D31ABE9D33E4589A7C216C96668A64B27BE048793912BBB5C0FA73`
+- 2026-10-06 GitHub Pre-release `v0.15.24` 공개
 
 ## 0.15.23 — 알람 울림 화면 UI/UX 개선 및 잠금 해제 제스처 가이드 추가
 

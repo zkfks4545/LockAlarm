@@ -145,6 +145,16 @@ object YouTubeEmbed {
                     }
                   }catch(ignored){}
                 }
+                function reportDuration(){
+                  try{
+                    if(player && player.getDuration && window.RoutineAlarmBridge){
+                      var duration = player.getDuration();
+                      if(duration && duration > 0){
+                        window.RoutineAlarmBridge.onDuration(String(duration));
+                      }
+                    }
+                  }catch(ignored){}
+                }
                 function onYouTubeIframeAPIReady(){
                   player=new YT.Player('player',{
                     videoId:'$id',
@@ -157,10 +167,16 @@ object YouTubeEmbed {
                       onReady:function(e){
                         if($startSeconds>0){e.target.seekTo($startSeconds,true);}
                         e.target.playVideo();
-                        if(window.RoutineAlarmBridge){window.RoutineAlarmBridge.onReady();}
+                        if(window.RoutineAlarmBridge){
+                          window.RoutineAlarmBridge.onReady();
+                          reportDuration();
+                        }
                         window.setInterval(reportPosition,500);
                       },
-                      onStateChange:reportPosition,
+                      onStateChange:function(e){
+                        reportPosition();
+                        reportDuration();
+                      },
                       onError:onPlayerError
                     }
                   });
@@ -193,6 +209,7 @@ fun createYouTubeWebView(
     value: String,
     playbackSessionId: String? = null,
     onPlaybackReady: (() -> Unit)? = null,
+    onDurationChanged: ((Long) -> Unit)? = null,
 ): WebView {
     lateinit var webView: SessionYouTubeWebView
     webView = SessionYouTubeWebView(context)
@@ -217,7 +234,7 @@ fun createYouTubeWebView(
     webView.webChromeClient = WebChromeClient()
     webView.webViewClient = WebViewClient()
     webView.addJavascriptInterface(
-        PlaybackJavascriptBridge(playbackLease, onPlaybackReady),
+        PlaybackJavascriptBridge(playbackLease, onPlaybackReady, onDurationChanged),
         PLAYBACK_BRIDGE_NAME,
     )
     val applicationId = context.packageName
@@ -245,6 +262,7 @@ private const val PLAYBACK_BRIDGE_NAME = "RoutineAlarmBridge"
 private class PlaybackJavascriptBridge(
     private val playbackLease: AlarmPlaybackLease?,
     private val onPlaybackReady: (() -> Unit)?,
+    private val onDurationChanged: ((Long) -> Unit)? = null,
 ) {
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -260,6 +278,16 @@ private class PlaybackJavascriptBridge(
             ?.toLong()
             ?: return
         playbackLease?.updatePosition(positionMillis)
+    }
+
+    @JavascriptInterface
+    fun onDuration(seconds: String) {
+        val durationMillis = seconds.toDoubleOrNull()
+            ?.times(1_000.0)
+            ?.toLong()
+            ?.takeIf { it > 0 }
+            ?: return
+        mainHandler.post { onDurationChanged?.invoke(durationMillis) }
     }
 }
 
@@ -317,10 +345,20 @@ fun destroyYouTubeWebView(webView: WebView) {
 }
 
 @Composable
-fun YouTubePlayer(value: String, modifier: Modifier = Modifier) {
+fun YouTubePlayer(
+    value: String,
+    modifier: Modifier = Modifier,
+    onDurationChanged: ((Long) -> Unit)? = null,
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     key(value) {
-        val webView = remember { createYouTubeWebView(context, value).apply { tag = value } }
+        val webView = remember {
+            createYouTubeWebView(
+                context = context,
+                value = value,
+                onDurationChanged = onDurationChanged,
+            ).apply { tag = value }
+        }
         AndroidView(
             modifier = modifier,
             factory = { webView },
@@ -332,3 +370,4 @@ fun YouTubePlayer(value: String, modifier: Modifier = Modifier) {
         }
     }
 }
+

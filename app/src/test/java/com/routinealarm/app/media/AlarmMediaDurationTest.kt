@@ -18,4 +18,22 @@ class AlarmMediaDurationTest {
         assertNull(AlarmMediaDuration.durationSecondsFromMillis(0L))
         assertNull(AlarmMediaDuration.durationSecondsFromMillis(-1L))
     }
+
+    @Test
+    fun youTubeCandidateDependsOnNonBlankUrl() {
+        val emptyUrlAlarm = com.routinealarm.app.model.AlarmSpec(
+            triggerAtMillis = 0L,
+            contentMode = com.routinealarm.app.model.ContentMode.YOUTUBE,
+            youtubeUrl = null,
+        )
+        org.junit.Assert.assertFalse(AlarmMediaDuration.hasDurationCandidate(emptyUrlAlarm))
+
+        val validUrlAlarm = com.routinealarm.app.model.AlarmSpec(
+            triggerAtMillis = 0L,
+            contentMode = com.routinealarm.app.model.ContentMode.YOUTUBE,
+            youtubeUrl = "https://youtu.be/dQw4w9WgXcQ",
+        )
+        org.junit.Assert.assertTrue(AlarmMediaDuration.hasDurationCandidate(validUrlAlarm))
+    }
 }
+

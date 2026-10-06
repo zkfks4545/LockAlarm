@@ -12,6 +12,9 @@ object AlarmMediaDuration {
     data class LookupResult(val maxDurationSeconds: Int?)
 
     fun lookup(context: Context, alarm: AlarmSpec): LookupResult {
+        if (alarm.contentMode == ContentMode.YOUTUBE) {
+            return LookupResult(alarm.youtubeDurationSeconds?.takeIf { it > 0 })
+        }
         if (alarm.contentMode != ContentMode.LOCAL) return LookupResult(null)
 
         val maxDurationMillis = candidateUris(alarm)
@@ -20,15 +23,21 @@ object AlarmMediaDuration {
         return LookupResult(durationSecondsFromMillis(maxDurationMillis))
     }
 
-    fun hasDurationCandidate(alarm: AlarmSpec): Boolean =
-        alarm.contentMode == ContentMode.LOCAL && candidateUris(alarm).isNotEmpty()
+    fun hasDurationCandidate(alarm: AlarmSpec): Boolean = when (alarm.contentMode) {
+        ContentMode.LOCAL -> candidateUris(alarm).isNotEmpty()
+        ContentMode.YOUTUBE -> !alarm.youtubeUrl.isNullOrBlank()
+    }
 
     fun effectiveDismissDelaySeconds(context: Context, alarm: AlarmSpec): Int {
         if (!alarm.dismissTimerEnabled) return 0
         val mediaDurationSeconds = lookup(context, alarm).maxDurationSeconds
+        val maxDelaySeconds = DismissTimerPolicy.maxDelaySecondsForContent(
+            contentMode = alarm.contentMode,
+            mediaDurationSeconds = mediaDurationSeconds,
+        )
         return DismissTimerPolicy.clampDelaySeconds(
             delaySeconds = alarm.dismissDelaySeconds,
-            maxDelaySeconds = DismissTimerPolicy.maxDelaySeconds(mediaDurationSeconds),
+            maxDelaySeconds = maxDelaySeconds,
         )
     }
 

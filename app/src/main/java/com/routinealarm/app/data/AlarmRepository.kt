@@ -301,6 +301,7 @@ class AlarmRepository(private val context: Context) {
         soundSource = soundSource.name,
         audioUri = audioUri,
         youtubeUrl = youtubeUrl,
+        youtubeDurationSeconds = youtubeDurationSeconds,
         scheduleRevision = scheduleRevision.coerceAtLeast(1L),
         homePreviewEnabled = homePreviewEnabled,
         updatedAtMillis = System.currentTimeMillis(),
@@ -333,6 +334,7 @@ class AlarmRepository(private val context: Context) {
         soundSource = parseEnum(soundSource, SoundSource.DEFAULT_ALARM),
         audioUri = audioUri,
         youtubeUrl = youtubeUrl,
+        youtubeDurationSeconds = youtubeDurationSeconds,
         homePreviewEnabled = homePreviewEnabled,
         scheduleRevision = scheduleRevision,
     )

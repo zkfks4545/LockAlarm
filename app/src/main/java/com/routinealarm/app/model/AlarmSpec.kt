@@ -26,6 +26,8 @@ data class AlarmSpec(
     val soundSource: SoundSource = SoundSource.DEFAULT_ALARM,
     val audioUri: String? = null,
     val youtubeUrl: String? = null,
+    /** Detected YouTube video duration in seconds when known. */
+    val youtubeDurationSeconds: Int? = null,
     /** Presentation-only home-card preview toggle; it never changes scheduling. */
     val homePreviewEnabled: Boolean = true,
     val scheduleRevision: Long = 0L,

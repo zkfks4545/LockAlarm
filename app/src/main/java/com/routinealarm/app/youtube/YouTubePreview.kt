@@ -31,7 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
-fun YouTubePreview(value: String, modifier: Modifier = Modifier) {
+fun YouTubePreview(
+    value: String,
+    modifier: Modifier = Modifier,
+    onDurationChanged: ((Int) -> Unit)? = null,
+) {
     when (YouTubeEmbed.previewState(value)) {
         YouTubePreviewState.EMPTY -> PreviewMessage(
             modifier = modifier,
@@ -56,7 +60,16 @@ fun YouTubePreview(value: String, modifier: Modifier = Modifier) {
                                 .fillMaxWidth()
                                 .height(200.dp),
                         ) {
-                            YouTubePlayer(value = value, modifier = Modifier.fillMaxSize())
+                            YouTubePlayer(
+                                value = value,
+                                modifier = Modifier.fillMaxSize(),
+                                onDurationChanged = { millis ->
+                                    val seconds = (millis / 1000).toInt()
+                                    if (seconds > 0) {
+                                        onDurationChanged?.invoke(seconds)
+                                    }
+                                },
+                            )
                         }
                         TextButton(onClick = { isPlaying = false }) {
                             Text("미리보기 닫기")
@@ -121,6 +134,7 @@ fun YouTubeCardPreview(
     isPlaying: Boolean,
     onPlay: () -> Unit,
     onStop: () -> Unit,
+    onDurationChanged: ((Int) -> Unit)? = null,
 ) {
     when (YouTubeEmbed.previewState(value)) {
         YouTubePreviewState.EMPTY -> PreviewMessage(
@@ -136,7 +150,16 @@ fun YouTubeCardPreview(
         YouTubePreviewState.READY -> {
             if (isPlaying) {
                 Box(modifier = modifier) {
-                    YouTubePlayer(value = value, modifier = Modifier.fillMaxSize())
+                    YouTubePlayer(
+                        value = value,
+                        modifier = Modifier.fillMaxSize(),
+                        onDurationChanged = { millis ->
+                            val seconds = (millis / 1000).toInt()
+                            if (seconds > 0) {
+                                onDurationChanged?.invoke(seconds)
+                            }
+                        },
+                    )
                     TextButton(
                         onClick = onStop,
                         modifier = Modifier

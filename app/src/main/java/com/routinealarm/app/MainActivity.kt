@@ -1600,22 +1600,24 @@ private fun AlarmEditorScreen(
         alarm.visualUri,
         alarm.visualKind,
         alarm.audioUri,
+        alarm.youtubeUrl,
+        alarm.youtubeDurationSeconds,
     ) {
         value = withContext(Dispatchers.IO) {
             AlarmMediaDuration.lookup(context, alarm)
         }
     }
     val mediaDurationSeconds = mediaDurationResult?.maxDurationSeconds
-    val dismissDelayMaxSeconds = DismissTimerPolicy.maxDelaySeconds(mediaDurationSeconds)
-    val dismissDelaySeconds = if (mediaDurationResult == null) {
-        alarm.dismissDelaySeconds
-            .coerceAtLeast(0)
-            .coerceAtMost(DismissTimerPolicy.UNKNOWN_MEDIA_MAX_DELAY_SECONDS)
-    } else {
-        DismissTimerPolicy.clampDelaySeconds(alarm.dismissDelaySeconds, dismissDelayMaxSeconds)
-    }
-    LaunchedEffect(mediaDurationResult, alarm.dismissTimerEnabled) {
-        if (mediaDurationResult != null && alarm.dismissTimerEnabled) {
+    val dismissDelayMaxSeconds = DismissTimerPolicy.maxDelaySecondsForContent(
+        contentMode = alarm.contentMode,
+        mediaDurationSeconds = mediaDurationSeconds,
+    )
+    val dismissDelaySeconds = DismissTimerPolicy.clampDelaySeconds(
+        delaySeconds = alarm.dismissDelaySeconds,
+        maxDelaySeconds = dismissDelayMaxSeconds,
+    )
+    LaunchedEffect(dismissDelayMaxSeconds, alarm.dismissTimerEnabled) {
+        if (alarm.dismissTimerEnabled) {
             val clampedDelaySeconds = DismissTimerPolicy.clampDelaySeconds(
                 delaySeconds = alarm.dismissDelaySeconds,
                 maxDelaySeconds = dismissDelayMaxSeconds,
@@ -1932,8 +1934,12 @@ private fun AlarmEditorScreen(
                                     !alarm.dismissTimerEnabled -> "꺼짐 · 알람 시작 즉시 해제 가능"
                                     mediaDurationResult == null && AlarmMediaDuration.hasDurationCandidate(alarm) ->
                                         "켜짐 · 미디어 길이 확인 중 (0초부터 설정 가능)"
+                                    mediaDurationSeconds != null && alarm.contentMode == ContentMode.YOUTUBE ->
+                                        "켜짐 · 0~${formatDurationLabel(mediaDurationSeconds)} 뒤 해제 버튼 활성화 (YouTube 영상 길이)"
                                     mediaDurationSeconds != null ->
                                         "켜짐 · 0~${formatDurationLabel(mediaDurationSeconds)} 뒤 해제 버튼 활성화"
+                                    alarm.contentMode == ContentMode.YOUTUBE ->
+                                        "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (재생 시 영상 길이 자동 감지)"
                                     else ->
                                         "켜짐 · 0~${formatDurationLabel(dismissDelayMaxSeconds)} (미디어 길이 확인 불가)"
                                 },
@@ -1947,14 +1953,10 @@ private fun AlarmEditorScreen(
                                     alarm.copy(
                                         dismissTimerEnabled = enabled,
                                         dismissDelaySeconds = if (enabled) {
-                                            if (mediaDurationResult == null) {
-                                                alarm.dismissDelaySeconds.coerceAtLeast(0)
-                                            } else {
-                                                DismissTimerPolicy.clampDelaySeconds(
-                                                    alarm.dismissDelaySeconds,
-                                                    dismissDelayMaxSeconds,
-                                                )
-                                            }
+                                            DismissTimerPolicy.clampDelaySeconds(
+                                                alarm.dismissDelaySeconds,
+                                                dismissDelayMaxSeconds,
+                                            )
                                         } else {
                                             0
                                         },
@@ -2074,15 +2076,35 @@ private fun AlarmEditorScreen(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = alarm.youtubeUrl.orEmpty(),
-                            onValueChange = { onAlarmChange(alarm.copy(youtubeUrl = it)) },
+                            onValueChange = { newUrl ->
+                                val prevUrl = alarm.youtubeUrl.orEmpty()
+                                val resetDuration = if (newUrl != prevUrl) null else alarm.youtubeDurationSeconds
+                                onAlarmChange(alarm.copy(youtubeUrl = newUrl, youtubeDurationSeconds = resetDuration))
+                            },
                             label = { Text("YouTube URL") },
                             singleLine = true,
                         )
                         YouTubePreview(
                             value = alarm.youtubeUrl.orEmpty(),
                             modifier = Modifier.fillMaxWidth(),
+                            onDurationChanged = { seconds ->
+                                if (alarm.youtubeDurationSeconds != seconds) {
+                                    onAlarmChange(alarm.copy(youtubeDurationSeconds = seconds))
+                                }
+                            },
                         )
-                        Text("공식 YouTube 임베디드 플레이어로 알람 화면 안에서 재생합니다.", style = MaterialTheme.typography.bodySmall)
+                        if (alarm.youtubeDurationSeconds != null) {
+                            Text(
+                                "감지된 영상 길이: ${formatDurationLabel(alarm.youtubeDurationSeconds)} (잠금 타이머 상한에 반영됨)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        } else {
+                            Text(
+                                "공식 YouTube 임베디드 플레이어로 알람 화면 안에서 재생합니다. (미리보기를 재생하면 영상 길이가 자동 감지됩니다)",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

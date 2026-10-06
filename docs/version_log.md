@@ -1,20 +1,21 @@
 # 루틴 알람 버전·빌드 내역
 
-작성 기준: 2026-09-30 (Asia/Seoul)
+작성 기준: 2026-10-06 (Asia/Seoul)
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.23**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.24**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 38
-- `versionName`: `0.15.23`
-- 최신 정식 서명 배포 타깃: [`LockAlarm-v0.15.23.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.23/LockAlarm-v0.15.23.apk) (GitHub Pre-release 공개 예정)
+- `versionCode`: 39
+- `versionName`: `0.15.24`
+- 최신 배포 타깃: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24) (GitHub Pre-release)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 ## 버전별 개선 내역
 
 | 버전 | 주요 개선 | 검증 결과 | APK |
 |---|---|---|---|
+| 0.15.24 | YouTube 영상 길이 IFrame API 자동 감지 및 잠금 타이머 상한선 300초 확장, Room DB 8 마이그레이션 | JVM 단위 테스트 149건 통과, `assembleDebug` 성공; SHA-256 `23AB415423D31ABE9D33E4589A7C216C96668A64B27BE048793912BBB5C0FA73` | `routine-alarm-integrated-final-v15.24-debug.apk` |
 | 초기 MVP | 1회성 정확 알람, `AlarmManager.setAlarmClock()`, 포그라운드 서비스, 잠금화면 전체화면 알람, 밝기·음량 저장/복원, 로컬 미디어 재생 | 최초 MVP 산출물 | `routine-alarm-mvp-debug.apk` |
 | D-Snooze | 동일 세션을 유지하는 5분 스누즈와 재알람 예약 흐름 | 스누즈 기능 검증 산출물 | `routine-alarm-d-snooze-debug.apk` |
 | 초기 통합 v2~v4 | Room 기반 복수 알람, 기존 알람 마이그레이션, 단발·요일 반복·포함/제외 날짜, 중복 전달 방지, 부팅·시간 변경 후 재예약, 밝기·음량 세션 정책, YouTube 공식 IFrame 재생 | 버전별 상세 변경사항은 별도 기록되지 않음 | `routine-alarm-integrated-final-v2/v3/v4-debug.apk` |

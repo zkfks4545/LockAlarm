@@ -3,14 +3,14 @@
 <p align="left">
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
-  <img src="https://img.shields.io/badge/Tests-146%20Passed-brightgreen?style=flat-square" alt="146 Tests Passed">
-  <img src="https://img.shields.io/badge/Release-v0.15.23-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Tests-149%20Passed-brightgreen?style=flat-square" alt="149 Tests Passed">
+  <img src="https://img.shields.io/badge/Release-v0.15.24-blue?style=flat-square" alt="Release">
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
 </p>
 
 안드로이드의 엄격한 절전 정책(Doze 모드)과 잠금 화면 환경에서도 신뢰성 있게 동작하도록 설계된 **오프라인 우선(Offline-first) 개인용 Android 알람 애플리케이션**입니다.
 
-정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행하며, 핵심 비즈니스 로직과 세션 전이 상태를 **146개의 JVM 단위 테스트(Unit Tests)**로 철저히 검증하였습니다.
+정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행하며, 핵심 비즈니스 로직과 세션 전이 상태를 **149개의 JVM 단위 테스트(Unit Tests)**로 철저히 검증하였습니다.
 
 ---
 
@@ -18,10 +18,8 @@
 
 최신 정식 서명 빌드는 [GitHub Releases](https://github.com/zkfks4545/LockAlarm/releases)에서 바로 다운로드할 수 있습니다.
 
-- **최신 버전**: [`v0.15.23` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.23)
-- **정식 APK 다운로드**: [LockAlarm-v0.15.23.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.23/LockAlarm-v0.15.23.apk)
-- **APK SHA-256**: `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`
-- **인증서 서명 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`
+- **최신 버전**: [`v0.15.24` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)
+- **APK 다운로드**: [outputs / Releases 페이지](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)에서 제공
 
 > 💡 **설치 안내**: 기존 개발용 빌드가 설치되어 있는 기기에서는 서명 불일치로 업데이트가 실패할 수 있습니다. 설치 문제 해결 및 상세 절차는 [설치 문제 확인 (INSTALLATION.md)](docs/INSTALLATION.md)을 참고하세요.
 
@@ -31,8 +29,8 @@
 
 1. **엄격한 수명 주기 & Doze 모드 제어**
    - `AlarmManager.setExactAndAllowWhileIdle`, `WakeLock`, `Foreground Service`를 결합하여 기기 슬립/화면 잠금 상태에서도 오차 없는 정확한 알람 트리거를 보장합니다.
-2. **146개 단위 테스트로 검증된 유한 상태 머신 (FSM)**
-   - 겹친 알람 선점, 스누즈 세션 카운트, 기기 시각 변경 및 재부팅 복구, 점진적 오디오 볼륨 복원 등 복잡한 상태 전이 로직을 146개의 JVM 단위 테스트로 100% 검증했습니다.
+2. **149개 단위 테스트로 검증된 유한 상태 머신 (FSM)**
+   - 겹친 알람 선점, 스누즈 세션 카운트, 기기 시각 변경 및 재부팅 복구, 점진적 오디오 볼륨 복원 등 복잡한 상태 전이 로직을 149개의 JVM 단위 테스트로 100% 검증했습니다.
 3. **오프라인 우선 & 제로 텔레메트리 (Zero-Telemetry)**
    - 외부 서버 통신, 계정 연동, 원격 분석(Analytics) 없이 기기 로컬에서만 완전히 독립적으로 안전하게 동작합니다.
 

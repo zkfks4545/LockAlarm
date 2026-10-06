@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AlarmEntity::class, AlarmOccurrenceEntity::class, RecentContentEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class RoutineAlarmDatabase : RoomDatabase() {
@@ -31,6 +31,7 @@ abstract class RoutineAlarmDatabase : RoomDatabase() {
                 MIGRATION_4_5,
                 MIGRATION_5_6,
                 MIGRATION_6_7,
+                MIGRATION_7_8,
             )
                 .build()
                 .also { instance = it }
@@ -146,6 +147,14 @@ abstract class RoutineAlarmDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     "ALTER TABLE alarms ADD COLUMN oneTimeDateUserSelected INTEGER NOT NULL DEFAULT 0",
+                )
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE alarms ADD COLUMN youtubeDurationSeconds INTEGER DEFAULT NULL",
                 )
             }
         }
