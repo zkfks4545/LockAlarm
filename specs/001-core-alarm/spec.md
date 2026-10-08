@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: v0.15.25 Pre-release adds repeat-alarm tomorrow resume and global 10-minute advance reminder with one-occurrence skip (Room v9). Real-device behavior remains open.
+**Status**: v0.15.25 Pre-release adds repeat-alarm tomorrow resume and global 10-minute advance reminder with one-occurrence skip (Room v9). The same-version replacement moves resume text beside the schedule label and removes the cancel button. Real-device behavior remains open.
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
@@ -13,7 +13,11 @@
 
 ## Clarifications
 
-### Session 2026-10-08 — 반복 알람 내일 재개·10분 전 예고 (미배포)
+### Session 2026-10-08 — 반복 알람 카드 간결화 (v0.15.25 동일 버전 교체)
+
+- 카드 크기는 기본 190dp를 유지한다. 내일 재개 상태는 날짜·반복 표시 옆에 표시하고 `예약 취소` 버튼은 노출하지 않는다. 꺼진 반복 알람은 그 표시 영역에서 `내일 다시 켜기`를 누를 수 있어야 한다. 동일 버전 교체본에 반영한다.
+
+### Session 2026-10-08 — 반복 알람 내일 재개·10분 전 예고 (v0.15.25)
 
 - 꺼진 `DAILY`·`WEEKLY` 알람은 카드에서 `내일 다시 켜기`를 예약할 수 있다. 오늘은 꺼진 상태로 표시하고 내일부터 켜진 상태로 표시한다. 실제 다음 울림이 내일이면 `내일 알람이 울립니다`를 카드에 표시한다. 요일 규칙 등으로 더 늦게 울리면 `내일 다시 켜집니다`와 실제 다음 알람 날짜를 표시한다. 실제 다음 울림은 내일 이후의 첫 유효 반복 날짜·시각이며, 포함·제외 날짜와 현지 시간대를 존중한다. 앱 재시작·부팅·시간 변경 후에도 그 이전 회차를 다시 예약하지 않는다.
 - 모든 활성 정규 알람은 10분 전 조용한 예고 알림을 예약한다. 10분 미만으로 남은 새 알람에는 늦은 예고를 즉시 띄우지 않는다. 예고 알림의 `이번 알람 해제`는 현재 회차 하나만 건너뛰고 반복 규칙은 유지한다. `그대로 두기`·알림 닫기는 예약을 바꾸지 않는다.

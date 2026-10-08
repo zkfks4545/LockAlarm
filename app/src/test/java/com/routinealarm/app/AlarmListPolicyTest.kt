@@ -38,6 +38,10 @@ class AlarmListPolicyTest {
             TomorrowResumeStatus("내일 알람이 울립니다", null),
             AlarmListPolicy.tomorrowResumeStatus(alarm, today.toEpochDay(), zone),
         )
+        assertEquals(
+            "내일 알람이 울립니다",
+            AlarmListPolicy.compactTomorrowResumeLabel(alarm, today.toEpochDay(), zone),
+        )
     }
 
     @Test
@@ -56,6 +60,10 @@ class AlarmListPolicyTest {
         assertEquals(
             TomorrowResumeStatus("내일 다시 켜집니다", "다음 알람: 10월 12일 (월)"),
             AlarmListPolicy.tomorrowResumeStatus(alarm, today.toEpochDay(), zone),
+        )
+        assertEquals(
+            "내일 켜짐 · 10/12 울림",
+            AlarmListPolicy.compactTomorrowResumeLabel(alarm, today.toEpochDay(), zone),
         )
     }
 }
