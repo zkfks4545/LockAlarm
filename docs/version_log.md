@@ -1,14 +1,16 @@
 # 루틴 알람 버전·빌드 내역
 
-작성 기준: 2026-10-06 (Asia/Seoul)
+작성 기준: 2026-10-08 (Asia/Seoul)
+
+v0.15.25에는 반복 알람의 `내일 다시 켜기`(실제 내일 울리면 `내일 알람이 울립니다`, 더 늦게 울리면 실제 다음 날짜 표시)와 모든 활성 알람의 10분 전 예고·이번 1회 건너뛰기가 포함됩니다. 타이머 완료 전 스누즈는 여전히 허용하지 않습니다.
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.24**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.25**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 39
-- `versionName`: `0.15.24`
-- 최신 배포 타깃: [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
+- `versionCode`: 40
+- `versionName`: `0.15.25`
+- 최신 배포 타깃: [`LockAlarm-v0.15.25.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.25/LockAlarm-v0.15.25.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 2026-10-06에 같은 v0.15.24의 정식 APK를 다시 교체했습니다. 이전 정식 APK SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`는 현재 다운로드 자산의 해시가 아닙니다.
@@ -17,6 +19,7 @@
 
 | 버전 | 주요 개선 | 검증 결과 | APK |
 |---|---|---|---|
+| 0.15.25 | 내일 다시 켜기·예약 상태/다음 울림 날짜, 모든 활성 알람의 10분 전 조용한 예고와 이번 1회만 건너뛰기, Room DB 9 | 정식 빌드 JVM 테스트 162건, `lintRelease`, `assembleRelease` 성공; 정식 APK SHA-256 `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`; 실기기 미검증 | `LockAlarm-v0.15.25.apk` |
 | 0.15.24 | YouTube 영상 길이 IFrame 감지, 미확인 시 300초 상한, 수동 미리보기 1회 후 영상 ID별 임시 재사용, Room DB 8 | 동일 버전 교체 정식 빌드 JVM 테스트 152건, `lintRelease` 오류 0건, `assembleRelease` 성공; 공개 정식 APK SHA-256 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD` | `LockAlarm-v0.15.24.apk` |
 | 초기 MVP | 1회성 정확 알람, `AlarmManager.setAlarmClock()`, 포그라운드 서비스, 잠금화면 전체화면 알람, 밝기·음량 저장/복원, 로컬 미디어 재생 | 최초 MVP 산출물 | `routine-alarm-mvp-debug.apk` |
 | D-Snooze | 동일 세션을 유지하는 5분 스누즈와 재알람 예약 흐름 | 스누즈 기능 검증 산출물 | `routine-alarm-d-snooze-debug.apk` |

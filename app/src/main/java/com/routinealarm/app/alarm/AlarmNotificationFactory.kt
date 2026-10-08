@@ -6,11 +6,74 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.app.NotificationCompat
 import com.routinealarm.app.MainActivity
 import com.routinealarm.app.R
 
 class AlarmNotificationFactory(private val context: Context) {
+    fun createPreAlertChannel() {
+        context.getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(
+                PRE_ALERT_CHANNEL_ID,
+                "알람 예고",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = "알람 10분 전 이번 회차를 건너뛸지 묻는 알림"
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setSound(null, null)
+                enableVibration(false)
+            },
+        )
+    }
+
+    fun buildPreAlert(alarmId: Int, label: String, revision: Long, triggerAtMillis: Long): Notification {
+        val ticketUri = Uri.parse("routinealarm://prealert/$alarmId/$revision/$triggerAtMillis")
+        val skipIntent = PendingIntent.getBroadcast(
+            context,
+            alarmId,
+            Intent(context, AlarmPreAlertReceiver::class.java)
+                .setAction(AlarmPreAlertReceiver.ACTION_SKIP)
+                .setData(ticketUri)
+                .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+                .putExtra(AlarmScheduler.EXTRA_SCHEDULE_REVISION, revision)
+                .putExtra(AlarmScheduler.EXTRA_TRIGGER_AT, triggerAtMillis),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val keepIntent = PendingIntent.getBroadcast(
+            context,
+            alarmId,
+            Intent(context, AlarmPreAlertReceiver::class.java)
+                .setAction(AlarmPreAlertReceiver.ACTION_KEEP)
+                .setData(ticketUri)
+                .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+                .putExtra(AlarmScheduler.EXTRA_SCHEDULE_REVISION, revision)
+                .putExtra(AlarmScheduler.EXTRA_TRIGGER_AT, triggerAtMillis),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val appIntent = PendingIntent.getActivity(
+            context,
+            alarmId + PRE_ALERT_ACTIVITY_REQUEST_OFFSET,
+            Intent(context, MainActivity::class.java)
+                .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(context, PRE_ALERT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_alarm)
+            .setContentTitle("${label.ifBlank { "알람" }} · 곧 울립니다")
+            .setContentText("곧 울릴 알람을 해제할까요?")
+            .setSubText(android.text.format.DateFormat.format("a h:mm", triggerAtMillis))
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .setTimeoutAfter((triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(1L))
+            .setContentIntent(appIntent)
+            .addAction(R.drawable.ic_alarm, "이번 알람 해제", skipIntent)
+            .addAction(R.drawable.ic_alarm, "그대로 두기", keepIntent)
+            .build()
+    }
+
     fun createChannel() {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
@@ -146,11 +209,15 @@ class AlarmNotificationFactory(private val context: Context) {
 
     companion object {
         const val CHANNEL_ID = "active_alarm_v1"
+        const val PRE_ALERT_CHANNEL_ID = "upcoming_alarm_v1"
         fun notificationId(alarmId: Int): Int = 41_000 + alarmId
+        fun preAlertNotificationTag(alarmId: Int): String = "pre_alert:$alarmId"
+        const val PRE_ALERT_NOTIFICATION_ID = 0
         fun snoozeConfirmationNotificationId(alarmId: Int): Int = 42_000 + alarmId
         private const val DISMISS_REQUEST_OFFSET = 30_000
         private const val SNOOZE_REQUEST_OFFSET = 50_000
         private const val CONFIRMATION_ACTIVITY_REQUEST_OFFSET = 70_000
+        private const val PRE_ALERT_ACTIVITY_REQUEST_OFFSET = 80_000
         private const val SNOOZE_CONFIRMATION_TIMEOUT_MILLIS = 15_000L
     }
 }

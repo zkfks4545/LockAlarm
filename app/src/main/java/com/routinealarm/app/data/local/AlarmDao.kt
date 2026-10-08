@@ -40,7 +40,8 @@ interface AlarmDao {
     }
 
     @Query(
-        "UPDATE alarms SET enabled = :enabled, scheduleRevision = scheduleRevision + 1, " +
+        "UPDATE alarms SET enabled = :enabled, resumeOnEpochDay = NULL, " +
+            "scheduleRevision = scheduleRevision + 1, " +
             "updatedAtMillis = :updatedAt WHERE id = :alarmId",
     )
     suspend fun setEnabled(alarmId: Int, enabled: Boolean, updatedAt: Long)
@@ -52,7 +53,8 @@ interface AlarmDao {
     suspend fun setHomePreviewEnabled(alarmId: Int, enabled: Boolean, updatedAt: Long)
 
     @Query(
-        "UPDATE alarms SET triggerAtMillis = :nextTriggerAtMillis, updatedAtMillis = :updatedAtMillis " +
+        "UPDATE alarms SET triggerAtMillis = :nextTriggerAtMillis, resumeOnEpochDay = NULL, " +
+            "updatedAtMillis = :updatedAtMillis " +
             "WHERE id = :alarmId AND scheduleRevision = :scheduleRevision " +
             "AND triggerAtMillis = :deliveredTriggerAtMillis AND enabled = 1",
     )
@@ -63,6 +65,49 @@ interface AlarmDao {
         nextTriggerAtMillis: Long,
         updatedAtMillis: Long,
     ): Int
+
+    @Query(
+        "UPDATE alarms SET enabled = :enabled, triggerAtMillis = :nextTriggerAtMillis, " +
+            "resumeOnEpochDay = NULL, scheduleRevision = scheduleRevision + 1, " +
+            "updatedAtMillis = :updatedAtMillis WHERE id = :alarmId AND enabled = 1 " +
+            "AND scheduleRevision = :scheduleRevision AND triggerAtMillis = :triggerAtMillis",
+    )
+    suspend fun updateSkippedOccurrence(
+        alarmId: Int,
+        scheduleRevision: Long,
+        triggerAtMillis: Long,
+        nextTriggerAtMillis: Long,
+        enabled: Boolean,
+        updatedAtMillis: Long,
+    ): Int
+
+    /** Serialized with claimRegularOccurrence so a ringing occurrence cannot be skipped. */
+    @Transaction
+    suspend fun skipUpcomingOccurrence(
+        alarmId: Int,
+        scheduleRevision: Long,
+        triggerAtMillis: Long,
+        occurrenceId: String,
+        nextTriggerAtMillis: Long?,
+        leadMillis: Long,
+    ): AlarmEntity? {
+        val now = System.currentTimeMillis()
+        if (now < triggerAtMillis - leadMillis || now >= triggerAtMillis) return null
+        val alarm = findAlarm(alarmId) ?: return null
+        if (!alarm.enabled || alarm.scheduleRevision != scheduleRevision ||
+            alarm.triggerAtMillis != triggerAtMillis || findOccurrence(occurrenceId) != null
+        ) return null
+        if (nextTriggerAtMillis != null && nextTriggerAtMillis <= triggerAtMillis) return null
+        val updated = updateSkippedOccurrence(
+            alarmId = alarmId,
+            scheduleRevision = scheduleRevision,
+            triggerAtMillis = triggerAtMillis,
+            nextTriggerAtMillis = nextTriggerAtMillis ?: triggerAtMillis,
+            enabled = nextTriggerAtMillis != null,
+            updatedAtMillis = now,
+        )
+        return if (updated == 1) findAlarm(alarmId) else null
+    }
 
     @Query("DELETE FROM alarms WHERE id = :alarmId")
     suspend fun deleteAlarm(alarmId: Int)

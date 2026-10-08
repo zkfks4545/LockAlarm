@@ -83,6 +83,21 @@ class AlarmRepository(private val context: Context) {
         if (updated == 1) dao.findAlarm(alarmId)?.toModel() else null
     }
 
+    fun skipUpcomingOccurrence(
+        alarm: AlarmSpec,
+        occurrenceId: String,
+        nextTriggerAtMillis: Long?,
+    ): AlarmSpec? = io {
+        dao.skipUpcomingOccurrence(
+            alarmId = alarm.id,
+            scheduleRevision = alarm.scheduleRevision,
+            triggerAtMillis = alarm.triggerAtMillis,
+            occurrenceId = occurrenceId,
+            nextTriggerAtMillis = nextTriggerAtMillis,
+            leadMillis = com.routinealarm.app.alarm.AlarmPreAlertPolicy.LEAD_MILLIS,
+        )?.toModel()
+    }
+
     fun claimRegularOccurrence(
         occurrenceId: String,
         alarmId: Int,
@@ -140,6 +155,10 @@ class AlarmRepository(private val context: Context) {
         dao.findOccurrence(occurrenceId)?.let {
             it.sessionId == sessionId && it.status == AlarmOccurrenceStatus.CLAIMED
         } == true
+    }
+
+    fun occurrenceExists(occurrenceId: String): Boolean = io {
+        dao.findOccurrence(occurrenceId) != null
     }
 
     fun deferClaimedOccurrence(occurrenceId: String, sessionId: String): Boolean = io {
@@ -304,6 +323,7 @@ class AlarmRepository(private val context: Context) {
         youtubeDurationSeconds = youtubeDurationSeconds,
         scheduleRevision = scheduleRevision.coerceAtLeast(1L),
         homePreviewEnabled = homePreviewEnabled,
+        resumeOnEpochDay = resumeOnEpochDay,
         updatedAtMillis = System.currentTimeMillis(),
     )
 
@@ -336,6 +356,7 @@ class AlarmRepository(private val context: Context) {
         youtubeUrl = youtubeUrl,
         youtubeDurationSeconds = youtubeDurationSeconds,
         homePreviewEnabled = homePreviewEnabled,
+        resumeOnEpochDay = resumeOnEpochDay,
         scheduleRevision = scheduleRevision,
     )
 

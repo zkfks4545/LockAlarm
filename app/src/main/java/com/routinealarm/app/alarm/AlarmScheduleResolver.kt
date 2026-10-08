@@ -69,7 +69,15 @@ object AlarmScheduleResolver {
         nowMillis: Long = System.currentTimeMillis(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): Long? {
-        val now = Instant.ofEpochMilli(nowMillis).atZone(zoneId)
+        val resumeStart = alarm.resumeOnEpochDay
+            ?.takeIf { alarm.repeatType != RepeatType.ONE_TIME }
+            ?.let { LocalDate.ofEpochDay(it).atStartOfDay(zoneId).toInstant().toEpochMilli() }
+        val effectiveNowMillis = if (resumeStart != null) {
+            maxOf(nowMillis, resumeStart - 1L)
+        } else {
+            nowMillis
+        }
+        val now = Instant.ofEpochMilli(effectiveNowMillis).atZone(zoneId)
         val localTime = LocalTime.ofSecondOfDay(alarm.localTimeMinutes.coerceIn(0, 1439) * 60L)
         val repeatRule = when (alarm.repeatType) {
             RepeatType.ONE_TIME -> RepeatRule.OneTime(
@@ -104,6 +112,26 @@ object AlarmScheduleResolver {
             zoneId = zoneId,
         )?.toInstant()?.toEpochMilli()
     }
+
+    /** Arms a disabled repeat without allowing any occurrence before tomorrow. */
+    fun prepareForTomorrowResume(
+        alarm: AlarmSpec,
+        now: ZonedDateTime = ZonedDateTime.now(),
+    ): AlarmSpec? {
+        if (alarm.repeatType == RepeatType.ONE_TIME) return null
+        val resumeDay = now.toLocalDate().plusDays(1).toEpochDay()
+        val prepared = alarm.copy(enabled = true, resumeOnEpochDay = resumeDay)
+        val next = nextTriggerAtMillis(
+            alarm = prepared,
+            nowMillis = now.toInstant().toEpochMilli(),
+            zoneId = now.zone,
+        ) ?: return null
+        return prepared.copy(triggerAtMillis = next)
+    }
+
+    fun isWaitingForTomorrow(alarm: AlarmSpec, todayEpochDay: Long): Boolean =
+        alarm.enabled && alarm.repeatType != RepeatType.ONE_TIME &&
+            alarm.resumeOnEpochDay?.let { todayEpochDay < it } == true
 
     /**
      * Resolves the next repeat occurrence after the occurrence being dismissed.

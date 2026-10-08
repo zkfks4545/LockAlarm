@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
+import android.util.Log
 import com.routinealarm.app.MainActivity
 import com.routinealarm.app.data.AlarmRepository
 import com.routinealarm.app.data.local.AlarmOccurrenceStatus
@@ -24,6 +25,8 @@ class AlarmScheduler(private val context: Context) {
     fun schedule(alarm: AlarmSpec) {
         check(canScheduleExactAlarms()) { "정확한 알람 권한이 필요합니다." }
         require(alarm.triggerAtMillis > System.currentTimeMillis()) { "알람 시간은 미래여야 합니다." }
+
+        cancelPreAlert(alarm.id)
 
         val identity = AlarmOccurrenceIds.regular(
             alarmId = alarm.id,
@@ -49,6 +52,33 @@ class AlarmScheduler(private val context: Context) {
                 sessionId = identity.sessionId,
             ),
         )
+        schedulePreAlert(alarm)
+    }
+
+    private fun schedulePreAlert(alarm: AlarmSpec) {
+        val reminderAt = AlarmPreAlertPolicy.reminderAtMillis(
+            alarm.triggerAtMillis,
+            System.currentTimeMillis(),
+        ) ?: return
+        // A reminder is best-effort. Failure must not undo the real alarm.
+        runCatching {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                reminderAt,
+                PendingIntent.getBroadcast(
+                    context,
+                    alarm.id,
+                    Intent(context, AlarmPreAlertReceiver::class.java)
+                        .setAction(AlarmPreAlertReceiver.ACTION_SHOW)
+                        .putExtra(EXTRA_ALARM_ID, alarm.id)
+                        .putExtra(EXTRA_SCHEDULE_REVISION, alarm.scheduleRevision)
+                        .putExtra(EXTRA_TRIGGER_AT, alarm.triggerAtMillis),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                ),
+            )
+        }.onFailure { error ->
+            Log.w("AlarmScheduler", "Could not schedule 10-minute pre-alert", error)
+        }
     }
 
     fun scheduleSnooze(session: AlarmSession, triggerAtMillis: Long) {
@@ -81,10 +111,30 @@ class AlarmScheduler(private val context: Context) {
     }
 
     fun cancel(alarmId: Int) {
+        cancelRegular(alarmId)
+        cancelSnooze(alarmId)
+    }
+
+    fun cancelRegular(alarmId: Int) {
         alarmManager.cancel(alarmPendingIntent(alarmId, AlarmOccurrenceKind.REGULAR))
         alarmManager.cancel(legacyBroadcastPendingIntent(alarmId, AlarmOccurrenceKind.REGULAR))
         alarmManager.cancel(legacyActivityPendingIntent(alarmId, AlarmOccurrenceKind.REGULAR))
-        cancelSnooze(alarmId)
+        cancelPreAlert(alarmId)
+    }
+
+    fun cancelPreAlert(alarmId: Int) {
+        PendingIntent.getBroadcast(
+            context,
+            alarmId,
+            Intent(context, AlarmPreAlertReceiver::class.java)
+                .setAction(AlarmPreAlertReceiver.ACTION_SHOW),
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+        )?.let(alarmManager::cancel)
+        context.getSystemService(NotificationManager::class.java)
+            .cancel(
+                AlarmNotificationFactory.preAlertNotificationTag(alarmId),
+                AlarmNotificationFactory.PRE_ALERT_NOTIFICATION_ID,
+            )
     }
 
     fun cancelSnooze(alarmId: Int) {
@@ -258,6 +308,8 @@ class AlarmScheduler(private val context: Context) {
             }
             if (canScheduleExactAlarms()) {
                 schedule(alarm)
+            } else {
+                cancelPreAlert(alarm.id)
             }
         }
     }

@@ -1,6 +1,6 @@
 # LockAlarm GitHub 배포 및 서명키 운영
 
-현재 버전은 **0.15.24 / 코드 39**입니다. YouTube 미리보기 1회 재생 후 길이 확인·영상 ID별 임시 재사용과, 확인 전 잠금 타이머 상한선 300초가 포함됩니다. 2026-10-06 GitHub Pre-release에 처음 첨부된 개발용 APK는 제거했고, 이후 정식 서명 APK도 같은 버전에서 기능 개선본으로 다시 교체했습니다. 정식 APK의 실기기 알람 동작은 아직 확인하지 않았습니다.
+현재 버전은 **0.15.25 / 코드 40**입니다. v0.15.24의 YouTube 길이 확인 개선에 더해 반복 알람의 `내일 다시 켜기`, 10분 전 예고 알림과 이번 회차만 건너뛰기가 포함됩니다. 정식 APK의 실기기 알람·예고 동작은 아직 확인하지 않았으므로 GitHub에서는 Pre-release로 배포합니다.
 
 > 정식 키는 생성됐고, 프로젝트의 `key/` 백업 폴더는 Git에서 제외됩니다. 키·백업·비밀번호는 GitHub나 채팅에 올리지 마세요. 비밀번호는 로컬 숨김 입력에만 입력합니다. 개발용 설치본과 정식 APK는 서명이 다르므로 덮어쓰기 설치를 가정하지 마세요. 앱 삭제는 로컬 알람 데이터를 지울 수 있습니다. 서명 자체가 Play Protect 경고 제거를 보장하지 않으며 보안 경고를 일괄 무시하지 마세요.
 
@@ -33,7 +33,7 @@ pwsh -NoProfile -File .\tools\release.ps1 -Action Build
 4. APK 서명 검증, 개발용 인증서·debuggable 여부 검사, 패키지·버전 및 SHA256 출력을 수행합니다.
 5. 추가한 환경 변수를 복원합니다. 업로드·태그·커밋은 수행하지 않습니다.
 
-출력 원본: `app/build/outputs/apk/release/app-release.apk`. v0.15.24 공개 파일 이름은 [`LockAlarm-v0.15.24.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk), SHA-256은 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`입니다. 개발용 `outputs/*-debug.apk`와 구분하고, 빌드·서명·패키지 버전 검증을 모두 마친 파일만 게시합니다.
+출력 원본: `app/build/outputs/apk/release/app-release.apk`. v0.15.25 배포 파일 이름은 [`LockAlarm-v0.15.25.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.25/LockAlarm-v0.15.25.apk), SHA-256은 `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`입니다. 개발용 `outputs/*-debug.apk`와 구분하고, 빌드·서명·패키지 버전 검증을 모두 마친 파일만 게시합니다.
 
 Gradle은 LOCKALARM_STORE_FILE, LOCKALARM_STORE_PASSWORD, LOCKALARM_KEY_ALIAS, LOCKALARM_KEY_PASSWORD 환경 변수를 읽습니다. 값 자체는 소스에 넣지 않습니다. 키 정보가 없으면 릴리스 패키징을 실패 처리합니다. 단위 테스트는 키 없이 별도로 실행할 수 있습니다.
 
@@ -64,7 +64,7 @@ JVM·lint 성공은 아래 항목의 실제 성공을 뜻하지 않습니다.
 4. 검증된 `app/build/outputs/apk/release/app-release.apk`만 버전별 `LockAlarm-v<version>.apk` 자산으로 게시합니다. `outputs/*-debug.apk`는 GitHub Release에 첨부하지 않습니다. 버전 태그를 임의로 이동하거나 개인 서명키를 첨부하지 않습니다.
 5. 공개 후 자산을 GitHub에서 다시 내려받아 파일 SHA-256·서명 지문·패키지 버전을 검증하고, 이를 릴리스 노트에 기록합니다. 시험 배포라면 **Pre-release** 표시와 실기기 미검증 범위를 유지합니다.
 
-이번 공개 결과: [Pre-release `v0.15.24`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24). 처음에는 개발용 서명 자산이 올라갔으나 2026-10-06에 제거하고 정식 서명 APK 하나로 교체했습니다. 같은 날 YouTube 길이 확인 흐름 개선본으로 자산을 다시 교체하고 v0.15.24 태그도 그 소스 커밋으로 옮겼습니다. 현재 공개 APK SHA-256은 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`, 서명 인증서 SHA-256은 위의 기존 정식 지문과 같습니다. 교체 후보를 원격에서 다시 다운로드해 일치 여부를 확인했습니다. 이전 정식 v0.15.24 APK SHA-256은 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`로 보존합니다. 이전 릴리스: `v0.15.23` / `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`.
+이번 공개 대상: [Pre-release `v0.15.25`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.25), 코드 40, APK SHA-256 `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`. 이전 [Pre-release `v0.15.24`](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)는 2026-10-06 정식 서명 자산으로 교체했고 태그도 그 소스 커밋으로 옮겼습니다. v0.15.24 공개 APK SHA-256은 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`이며, 그 이전 정식 APK의 해시 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`도 보존합니다.
 
 Pre-release는 지금 내려받을 수 있는 공개 시험판입니다. 실기기 검증을 끝내기 전에는 안정판으로 표시하지 않습니다. 검증 후 같은 릴리스의 Pre-release 표시를 해제해 안정판으로 전환할 수 있습니다. 이후 버전의 공개 게시 전에는 게시 범위와 테스트 결과를 다시 확인합니다.
 
@@ -81,6 +81,7 @@ Play 계정·테스트 정책·비용은 실제 등록 시 최신 공식 안내�
 - 기존 공개 인증서 SHA256: 1e5c10df0df1e6147ea4a77377de3e0d33486899419fde5cd6fcfff17cf4e7e4, 주체 Android Debug.
 - 정식 APK (0.15.22): `LockAlarm-v0.15.22.apk`, 8,772,356 bytes, 서명 인증서 주체 `CN=LockAlarm`, APK SHA256 `CD63A91FB6D4FA5A84353489957FFE14B7720CD3FFE8442D100BD9D83FCD8270`.
 - 정식 APK (0.15.23): `LockAlarm-v0.15.23.apk`, 8,772,356 bytes, 서명 인증서 주체 `CN=LockAlarm`, APK SHA256 `8127F3C71777EA667CD6334007406C1168D1F4D632E28095BD21088B7CE9A9E4`.
+- 정식 APK (0.15.25): `LockAlarm-v0.15.25.apk`, SHA-256 `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`, 버전 코드 40, 서명 인증서 주체 `CN=LockAlarm`.
 - 정식 공개 인증서 SHA256 (모든 정식 릴리스 불변): `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (`CN=LockAlarm`).
 - 개발용 디버그 인증서 SHA256 (릴리스 에셋 배포 엄격 금지): `1E5C10DF0DF1E6147EA4A77377DE3E0D33486899419FDE5CD6FCFFF17CF4E7E4` (`CN=Android Debug`).
 - GitHub 배포 대상 저장소: [zkfks4545/LockAlarm](https://github.com/zkfks4545/LockAlarm).

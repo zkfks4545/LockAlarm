@@ -30,6 +30,8 @@ data class AlarmSpec(
     val youtubeDurationSeconds: Int? = null,
     /** Presentation-only home-card preview toggle; it never changes scheduling. */
     val homePreviewEnabled: Boolean = true,
+    /** A repeating alarm can be armed now but shown as paused until this local date. */
+    val resumeOnEpochDay: Long? = null,
     val scheduleRevision: Long = 0L,
 ) {
     companion object {

@@ -31,5 +31,6 @@ data class AlarmEntity(
     @ColumnInfo(defaultValue = "NULL") val youtubeDurationSeconds: Int?,
     @ColumnInfo(defaultValue = "1") val scheduleRevision: Long,
     @ColumnInfo(defaultValue = "1") val homePreviewEnabled: Boolean,
+    @ColumnInfo(defaultValue = "NULL") val resumeOnEpochDay: Long?,
     val updatedAtMillis: Long,
 )

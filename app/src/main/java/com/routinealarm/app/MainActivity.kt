@@ -538,7 +538,7 @@ private fun RoutineAlarmApp(
                         onToggle = { alarm, enabled ->
                             if (enabled) {
                                 message = saveAndMaybeSchedule(
-                                    alarm = alarm,
+                                    alarm = alarm.copy(resumeOnEpochDay = null),
                                     enable = true,
                                     testDelayMillis = null,
                                     permissions = permissions,
@@ -554,6 +554,40 @@ private fun RoutineAlarmApp(
                                 }
                                 message = "알람을 껐습니다."
                             }
+                        },
+                        onResumeTomorrow = { alarm ->
+                            if (AlarmSessionStore(context).load()?.alarmId == alarm.id) {
+                                message = "진행 중인 알람을 먼저 종료해 주세요."
+                            } else if (!permissions.allGranted) {
+                                message = permissions.blockedEditingMessage()
+                            } else {
+                                val prepared = AlarmScheduleResolver.prepareForTomorrowResume(alarm)
+                                if (prepared == null) {
+                                    message = "다시 켤 반복 일정이 없습니다."
+                                } else {
+                                    message = runCatching {
+                                        scheduler.cancelRegular(alarm.id)
+                                        val saved = repository.save(prepared)
+                                        try {
+                                            scheduler.schedule(saved)
+                                        } catch (error: Exception) {
+                                            repository.disable(saved.id)
+                                            throw error
+                                        }
+                                        val status = AlarmListPolicy.tomorrowResumeStatus(
+                                            saved,
+                                            requireNotNull(saved.resumeOnEpochDay) - 1L,
+                                        )
+                                        listOfNotNull(status.headline, status.detail)
+                                            .joinToString(" · ")
+                                    }.getOrElse { "예약 실패: ${it.message ?: "알 수 없는 오류"}" }
+                                }
+                            }
+                        },
+                        onCancelTomorrow = { alarm ->
+                            scheduler.cancelRegular(alarm.id)
+                            repository.disable(alarm.id)
+                            message = "내일 다시 켜기 예약을 취소했습니다."
                         },
                         previewEnabled = { alarm -> alarm.homePreviewEnabled },
                         onPreviewToggle = { alarm, enabled ->
@@ -934,6 +968,8 @@ private fun AlarmListScreen(
     onAdd: () -> Unit,
     onEdit: (AlarmSpec) -> Unit,
     onToggle: (AlarmSpec, Boolean) -> Unit,
+    onResumeTomorrow: (AlarmSpec) -> Unit,
+    onCancelTomorrow: (AlarmSpec) -> Unit,
     previewEnabled: (AlarmSpec) -> Boolean,
     onPreviewToggle: (AlarmSpec, Boolean) -> Unit,
     onDelete: (AlarmSpec) -> Unit,
@@ -942,6 +978,12 @@ private fun AlarmListScreen(
     var activeYoutubePreviewAlarmId by remember { mutableStateOf<Int?>(null) }
     val orderedAlarms = remember(alarms) {
         AlarmListPolicy.sortForDisplay(alarms)
+    }
+    val todayEpochDay by produceState(LocalDate.now().toEpochDay()) {
+        while (true) {
+            delay(30_000L)
+            value = LocalDate.now().toEpochDay()
+        }
     }
     val featured = orderedAlarms.firstOrNull()
     val remaining = orderedAlarms.filterNot { it.id == featured?.id }
@@ -982,7 +1024,7 @@ private fun AlarmListScreen(
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         )
                         Text(
-                            "활성 ${alarms.count { it.enabled }}개 · 밝기와 음량은 시작할 때 한 번만 적용",
+                            "활성 ${alarms.count { it.enabled && !AlarmScheduleResolver.isWaitingForTomorrow(it, todayEpochDay) }}개 · 밝기와 음량은 시작할 때 한 번만 적용",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -1020,11 +1062,14 @@ private fun AlarmListScreen(
                 item {
                     DashboardFeaturedAlarmCard(
                         alarm = featured,
+                        todayEpochDay = todayEpochDay,
                         editingEnabled = permissions.allGranted,
                         previewEnabled = previewEnabled(featured),
                         youtubePreviewPlaying = activeYoutubePreviewAlarmId == featured.id,
                         onEdit = { onEdit(featured) },
                         onToggle = { onToggle(featured, it) },
+                        onResumeTomorrow = { onResumeTomorrow(featured) },
+                        onCancelTomorrow = { onCancelTomorrow(featured) },
                         onPreviewToggle = {
                             if (!it && activeYoutubePreviewAlarmId == featured.id) {
                                 activeYoutubePreviewAlarmId = null
@@ -1056,11 +1101,14 @@ private fun AlarmListScreen(
                                 DashboardAlarmCard(
                                     modifier = Modifier.weight(1f),
                                     alarm = alarm,
+                                    todayEpochDay = todayEpochDay,
                                     editingEnabled = permissions.allGranted,
                                     previewEnabled = previewEnabled(alarm),
                                     youtubePreviewPlaying = activeYoutubePreviewAlarmId == alarm.id,
                                     onEdit = { onEdit(alarm) },
                                     onToggle = { onToggle(alarm, it) },
+                                    onResumeTomorrow = { onResumeTomorrow(alarm) },
+                                    onCancelTomorrow = { onCancelTomorrow(alarm) },
                                     onPreviewToggle = {
                                         if (!it && activeYoutubePreviewAlarmId == alarm.id) {
                                             activeYoutubePreviewAlarmId = null
@@ -1085,11 +1133,14 @@ private fun AlarmListScreen(
                     DashboardAlarmCard(
                         modifier = Modifier.fillMaxWidth(),
                         alarm = alarm,
+                        todayEpochDay = todayEpochDay,
                         editingEnabled = permissions.allGranted,
                         previewEnabled = previewEnabled(alarm),
                         youtubePreviewPlaying = activeYoutubePreviewAlarmId == alarm.id,
                         onEdit = { onEdit(alarm) },
                         onToggle = { onToggle(alarm, it) },
+                        onResumeTomorrow = { onResumeTomorrow(alarm) },
+                        onCancelTomorrow = { onCancelTomorrow(alarm) },
                         onPreviewToggle = {
                             if (!it && activeYoutubePreviewAlarmId == alarm.id) {
                                 activeYoutubePreviewAlarmId = null
@@ -1131,22 +1182,29 @@ private fun AlarmListScreen(
 @Composable
 private fun DashboardFeaturedAlarmCard(
     alarm: AlarmSpec,
+    todayEpochDay: Long,
     editingEnabled: Boolean,
     previewEnabled: Boolean,
     youtubePreviewPlaying: Boolean,
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
+    onResumeTomorrow: () -> Unit,
+    onCancelTomorrow: () -> Unit,
     onPreviewToggle: (Boolean) -> Unit,
     onYoutubePreviewPlay: () -> Unit,
     onYoutubePreviewStop: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val waitingForTomorrow = AlarmScheduleResolver.isWaitingForTomorrow(alarm, todayEpochDay)
+    val cardHeight = if (alarm.repeatType != RepeatType.ONE_TIME &&
+        (!alarm.enabled || waitingForTomorrow)
+    ) 290.dp else 190.dp
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(190.dp)) {
+        Box(modifier = Modifier.fillMaxWidth().height(cardHeight)) {
             if (previewEnabled && alarm.hasHomePreviewContent()) {
                 AlarmHomePreview(
                     alarm = alarm,
@@ -1189,6 +1247,18 @@ private fun DashboardFeaturedAlarmCard(
                     }
                     TextButton(onClick = onDelete) { Text("삭제", color = Color.White) }
                 }
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TomorrowResumeControl(
+                        alarm = alarm,
+                        todayEpochDay = todayEpochDay,
+                        enabled = editingEnabled,
+                        onResumeTomorrow = onResumeTomorrow,
+                        onCancelTomorrow = onCancelTomorrow,
+                    )
+                }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -1207,7 +1277,7 @@ private fun DashboardFeaturedAlarmCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("알람", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
                             Switch(
-                                checked = alarm.enabled,
+                                checked = alarm.enabled && !waitingForTomorrow,
                                 onCheckedChange = onToggle,
                                 enabled = editingEnabled || alarm.enabled,
                             )
@@ -1231,16 +1301,23 @@ private fun DashboardFeaturedAlarmCard(
 private fun DashboardAlarmCard(
     modifier: Modifier,
     alarm: AlarmSpec,
+    todayEpochDay: Long,
     editingEnabled: Boolean,
     previewEnabled: Boolean,
     youtubePreviewPlaying: Boolean,
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
+    onResumeTomorrow: () -> Unit,
+    onCancelTomorrow: () -> Unit,
     onPreviewToggle: (Boolean) -> Unit,
     onYoutubePreviewPlay: () -> Unit,
     onYoutubePreviewStop: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val waitingForTomorrow = AlarmScheduleResolver.isWaitingForTomorrow(alarm, todayEpochDay)
+    val cardHeight = if (alarm.repeatType != RepeatType.ONE_TIME &&
+        (!alarm.enabled || waitingForTomorrow)
+    ) 290.dp else 190.dp
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(26.dp),
@@ -1249,7 +1326,7 @@ private fun DashboardAlarmCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(190.dp)
+                .height(cardHeight)
                 .clip(RoundedCornerShape(26.dp)),
         ) {
             if (previewEnabled && alarm.hasHomePreviewContent()) {
@@ -1299,6 +1376,18 @@ private fun DashboardAlarmCard(
                     }
                     TextButton(onClick = onDelete) { Text("삭제", color = Color.White) }
                 }
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TomorrowResumeControl(
+                        alarm = alarm,
+                        todayEpochDay = todayEpochDay,
+                        enabled = editingEnabled,
+                        onResumeTomorrow = onResumeTomorrow,
+                        onCancelTomorrow = onCancelTomorrow,
+                    )
+                }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -1317,7 +1406,7 @@ private fun DashboardAlarmCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("알람", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
                             Switch(
-                                checked = alarm.enabled,
+                                checked = alarm.enabled && !waitingForTomorrow,
                                 onCheckedChange = onToggle,
                                 enabled = editingEnabled || alarm.enabled,
                             )
@@ -1330,6 +1419,54 @@ private fun DashboardAlarmCard(
                                 enabled = editingEnabled,
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TomorrowResumeControl(
+    alarm: AlarmSpec,
+    todayEpochDay: Long,
+    enabled: Boolean,
+    onResumeTomorrow: () -> Unit,
+    onCancelTomorrow: () -> Unit,
+) {
+    if (alarm.repeatType == RepeatType.ONE_TIME) return
+    val waiting = AlarmScheduleResolver.isWaitingForTomorrow(alarm, todayEpochDay)
+    when {
+        !alarm.enabled -> OutlinedButton(
+            onClick = onResumeTomorrow,
+            enabled = enabled,
+        ) { Text("내일 다시 켜기", color = Color.White) }
+
+        waiting -> {
+            val status = AlarmListPolicy.tomorrowResumeStatus(alarm, todayEpochDay)
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.Black.copy(alpha = 0.68f),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        status.headline,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    )
+                    status.detail?.let { detail ->
+                        Text(
+                            detail,
+                            color = Color.White.copy(alpha = 0.88f),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    TextButton(onClick = onCancelTomorrow) {
+                        Text("예약 취소", color = Color.White)
                     }
                 }
             }

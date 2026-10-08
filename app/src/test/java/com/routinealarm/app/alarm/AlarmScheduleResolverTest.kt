@@ -7,6 +7,8 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlarmScheduleResolverTest {
@@ -407,5 +409,65 @@ class AlarmScheduleResolverTest {
             ZonedDateTime.of(2026, 8, 3, 7, 0, 0, 0, zone).toInstant().toEpochMilli(),
             result,
         )
+    }
+
+    @Test
+    fun tomorrowResumeSkipsTodaysDailyOccurrenceAndAppearsOffUntilTomorrow() {
+        val now = ZonedDateTime.of(2026, 8, 1, 6, 30, 0, 0, zone)
+        val alarm = AlarmSpec(
+            triggerAtMillis = now.toInstant().toEpochMilli(),
+            enabled = false,
+            repeatType = RepeatType.DAILY,
+            localTimeMinutes = 7 * 60,
+        )
+
+        val prepared = requireNotNull(AlarmScheduleResolver.prepareForTomorrowResume(alarm, now))
+
+        assertTrue(prepared.enabled)
+        assertEquals(LocalDate.of(2026, 8, 2).toEpochDay(), prepared.resumeOnEpochDay)
+        assertEquals(
+            ZonedDateTime.of(2026, 8, 2, 7, 0, 0, 0, zone).toInstant().toEpochMilli(),
+            prepared.triggerAtMillis,
+        )
+        assertTrue(AlarmScheduleResolver.isWaitingForTomorrow(prepared, now.toLocalDate().toEpochDay()))
+        assertFalse(AlarmScheduleResolver.isWaitingForTomorrow(prepared, now.toLocalDate().plusDays(1).toEpochDay()))
+        assertEquals(
+            prepared.triggerAtMillis,
+            AlarmScheduleResolver.nextTriggerAtMillis(
+                prepared,
+                now.toInstant().toEpochMilli(),
+                zone,
+            ),
+        )
+    }
+
+    @Test
+    fun tomorrowResumeWeeklyUsesNextEligibleDateAndHonorsExclusions() {
+        val now = ZonedDateTime.of(2026, 8, 3, 6, 30, 0, 0, zone) // Monday
+        val alarm = AlarmSpec(
+            triggerAtMillis = now.toInstant().toEpochMilli(),
+            repeatType = RepeatType.WEEKLY,
+            localTimeMinutes = 7 * 60,
+            weekdays = setOf(1, 3),
+            excludeDatesEpochDay = setOf(LocalDate.of(2026, 8, 5).toEpochDay()),
+        )
+
+        val prepared = requireNotNull(AlarmScheduleResolver.prepareForTomorrowResume(alarm, now))
+
+        assertEquals(
+            ZonedDateTime.of(2026, 8, 10, 7, 0, 0, 0, zone).toInstant().toEpochMilli(),
+            prepared.triggerAtMillis,
+        )
+    }
+
+    @Test
+    fun oneTimeAlarmCannotUseTomorrowResume() {
+        val now = ZonedDateTime.of(2026, 8, 3, 6, 30, 0, 0, zone)
+        val alarm = AlarmSpec(
+            triggerAtMillis = now.toInstant().toEpochMilli(),
+            repeatType = RepeatType.ONE_TIME,
+        )
+
+        assertNull(AlarmScheduleResolver.prepareForTomorrowResume(alarm, now))
     }
 }

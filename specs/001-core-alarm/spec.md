@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: 0.15.24 adds YouTube duration detection via IFrame bridge, expands default delay fallback to 300s, updates Room to v8, widens snooze-dismiss button gap with center swipe unlock gesture guide, keeps new-alarm-first overlap preemption and one-way device media-volume recovery, makes home-toggle activation today-first even for stale automatically calculated dates, preserves explicit future dates, and retains the separate daily repeat option; scheduling and session recovery remain in scope; real-device behavior is still open
+**Status**: v0.15.25 Pre-release adds repeat-alarm tomorrow resume and global 10-minute advance reminder with one-occurrence skip (Room v9). Real-device behavior remains open.
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
@@ -12,6 +12,13 @@
 이 명세는 현재 프로토타입 코드보다 우선하는 Living Spec이다. 기존 코드는 요구사항을 검증하는 출발점이며, 명세와 충돌할 경우 계획 단계에서 수정 또는 제거 대상을 결정한다.
 
 ## Clarifications
+
+### Session 2026-10-08 — 반복 알람 내일 재개·10분 전 예고 (미배포)
+
+- 꺼진 `DAILY`·`WEEKLY` 알람은 카드에서 `내일 다시 켜기`를 예약할 수 있다. 오늘은 꺼진 상태로 표시하고 내일부터 켜진 상태로 표시한다. 실제 다음 울림이 내일이면 `내일 알람이 울립니다`를 카드에 표시한다. 요일 규칙 등으로 더 늦게 울리면 `내일 다시 켜집니다`와 실제 다음 알람 날짜를 표시한다. 실제 다음 울림은 내일 이후의 첫 유효 반복 날짜·시각이며, 포함·제외 날짜와 현지 시간대를 존중한다. 앱 재시작·부팅·시간 변경 후에도 그 이전 회차를 다시 예약하지 않는다.
+- 모든 활성 정규 알람은 10분 전 조용한 예고 알림을 예약한다. 10분 미만으로 남은 새 알람에는 늦은 예고를 즉시 띄우지 않는다. 예고 알림의 `이번 알람 해제`는 현재 회차 하나만 건너뛰고 반복 규칙은 유지한다. `그대로 두기`·알림 닫기는 예약을 바꾸지 않는다.
+- 예고 액션은 ID·시각·스케줄 revision·발생 상태를 확인한다. 이미 울림이 시작되었거나 편집된 알람의 오래된 액션으로는 해제하지 않는다. 정규 울림 시작 시 예고 알림을 제거한다. 알림·정확 알람 접근이 없으면 이를 보장할 수 없으며, 실제 Galaxy/Doze 동작은 별도 검증한다.
+- 울림 화면의 잠금 타이머가 끝나기 전 스누즈를 허용하는 변경은 이번 범위에서 제외한다.
 
 ### Session 2026-08-01
 

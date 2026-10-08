@@ -3,14 +3,14 @@
 <p align="left">
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
-  <img src="https://img.shields.io/badge/Tests-152%20Passed-brightgreen?style=flat-square" alt="152 Tests Passed">
-  <img src="https://img.shields.io/badge/Release-v0.15.24-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Tests-162%20Passed-brightgreen?style=flat-square" alt="162 Tests Passed">
+  <img src="https://img.shields.io/badge/Release-v0.15.25-blue?style=flat-square" alt="Release">
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
 </p>
 
 안드로이드의 엄격한 절전 정책(Doze 모드)과 잠금 화면 환경에서도 신뢰성 있게 동작하도록 설계된 **오프라인 우선(Offline-first) 개인용 Android 알람 애플리케이션**입니다.
 
-정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행합니다. 핵심 로직에 대한 **152개의 JVM 단위 테스트**가 통과했지만, 이는 실기기에서의 울림을 증명하지 않습니다.
+정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행합니다. 핵심 로직에 대한 **162개의 JVM 단위 테스트**가 통과했지만, 이는 실기기에서의 울림을 증명하지 않습니다.
 
 ---
 
@@ -18,12 +18,12 @@
 
 최신 정식 서명 APK는 GitHub **Pre-release**에서 다운로드할 수 있습니다. 중요한 알람에 사용하기 전에는 본인 기기에서 직접 시험하세요.
 
-- **최신 버전**: [`v0.15.24` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.24)
-- **APK 다운로드**: [LockAlarm-v0.15.24.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.24/LockAlarm-v0.15.24.apk)
-- **APK SHA-256**: `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD`
+- **최신 버전**: [`v0.15.25` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.25)
+- **APK 다운로드**: [LockAlarm-v0.15.25.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.25/LockAlarm-v0.15.25.apk)
+- **APK SHA-256**: `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`
 - **서명 인증서 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (v0.15.23 정식 배포본과 동일)
 
-> ⚠️ **2026-10-06 동일 버전 재배포**: v0.15.24 APK를 YouTube 길이 확인 흐름을 개선한 파일로 교체했습니다. 버전 코드도 39로 같으므로 이전에 v0.15.24를 받았다면 새 해시를 확인해 직접 다시 다운로드하세요. 최초에 잘못 첨부된 `...debug.apk`는 제거됐으며, 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요.
+> ⚠️ **업데이트 전 확인**: 기존 정식 서명 APK에서는 동일 인증서로 업데이트할 수 있지만, 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요. v0.15.25의 10분 전 예고·내일 다시 켜기 기능은 아직 실기기에서 검증되지 않았습니다.
 
 ---
 
@@ -31,7 +31,7 @@
 
 1. **엄격한 수명 주기 & Doze 모드 제어**
    - `AlarmManager.setExactAndAllowWhileIdle`, `WakeLock`, `Foreground Service`를 사용해 기기 슬립·화면 잠금 상황에 대응하도록 설계했습니다. 실제 울림은 기기·권한·절전 설정에 따라 확인해야 합니다.
-2. **152개 단위 테스트로 검증된 유한 상태 머신 (FSM)**
+2. **162개 단위 테스트로 검증된 유한 상태 머신 (FSM)**
    - 겹친 알람 선점, 스누즈 세션 카운트, 기기 시각 변경 및 재부팅 복구, 점진적 오디오 볼륨 복원 등 상태 전이 로직을 JVM 단위 테스트로 검사했습니다.
 3. **오프라인 우선 & 제로 텔레메트리 (Zero-Telemetry)**
    - 자체 서버, 계정 연동, 원격 분석(Analytics)은 사용하지 않습니다. 로컬 알람 기능은 오프라인 우선이며, YouTube 재생에는 네트워크가 필요합니다.
@@ -41,6 +41,7 @@
 ## 📱 주요 기능
 
 - **정밀한 알람 스케줄링**: 시간·요일·포함/제외 날짜 지원 (단발, 요일별 반복, 매일 반복)
+- **반복 알람 재개·예고**: 꺼진 반복 알람을 내일부터 다시 켜기, 모든 활성 알람의 10분 전 조용한 예고와 이번 회차만 건너뛰기
 - **다양한 미디어 재생**: 로컬 이미지·GIF·영상·음악 및 공식 YouTube URL IFrame 전체 화면 재생
 - **YouTube 영상 길이 기반 잠금 타이머**: 확인 전 최대 5분, 수동 미리보기 1회 재생 후 영상 길이를 상한에 반영
 - **인터랙티브 컨트롤**: 횟수 제한 없는 5분 스누즈, 위로 밀어 종료 제스처, 초 단위 타이머
@@ -61,7 +62,7 @@
 ### 빌드 및 테스트 실행
 
 ```bash
-# 단위 테스트 전체 실행 (152 Tests) 및 디버그 APK 빌드
+# 단위 테스트 전체 실행 (162 Tests) 및 디버그 APK 빌드
 ./gradlew test assembleDebug      # macOS / Linux
 gradlew.bat test assembleDebug    # Windows
 ```

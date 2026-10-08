@@ -72,6 +72,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".alarm.AlarmPreAlertReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".alarm.RescheduleReceiver"
             android:directBootAware="false"
             android:exported="true">

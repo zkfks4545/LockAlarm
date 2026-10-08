@@ -116,6 +116,8 @@ object AlarmDeliveryCoordinator {
             return AlarmDeliveryOutcome(AlarmDeliveryState.IGNORED)
         }
         if (occurrenceKind == AlarmOccurrenceKind.REGULAR) {
+            // The question is only valid until this occurrence begins ringing.
+            AlarmScheduler(context).cancelPreAlert(requestedId)
             AlarmScheduler(context).scheduleNextAfterDelivery(alarm, requestedTriggerAt)
         }
         if (claim.disposition == OccurrenceClaimDisposition.WAIT) {
