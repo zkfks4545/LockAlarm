@@ -224,7 +224,7 @@ class AlarmOverlayController(private val context: Context) {
                     gravity = Gravity.CENTER_VERTICAL
                     if (hasSnooze) {
                         addView(
-                            createSnoozeControl(alarm, session, unlockAtMillis),
+                            createSnoozeControl(alarm, session),
                             LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
                         )
                         // Widened center gap: transparent space allowing the gesture view behind to shine through
@@ -289,11 +289,10 @@ class AlarmOverlayController(private val context: Context) {
     private fun createSnoozeControl(
         alarm: AlarmSpec,
         session: AlarmSession,
-        unlockAtMillis: Long,
     ): View = AlarmTimedActionButton(
         context = context,
-        unlockAtMillis = unlockAtMillis,
-        lockedDescription = "타이머 완료 뒤 5분 스누즈",
+        unlockAtMillis = 0L,
+        lockedDescription = "5분 스누즈",
         activeDescription = "5분 스누즈",
         action = {
             context.startService(

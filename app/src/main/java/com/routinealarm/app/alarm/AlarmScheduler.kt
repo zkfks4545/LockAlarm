@@ -239,14 +239,28 @@ class AlarmScheduler(private val context: Context) {
                 } else {
                     notificationFactory.buildSnoozePermissionBlocked(session.alarmId)
                 }
-                context.getSystemService(NotificationManager::class.java).notify(
+                val notificationManager = context.getSystemService(NotificationManager::class.java)
+                notificationManager.notify(
                     AlarmNotificationFactory.notificationId(session.alarmId),
                     notification,
+                )
+                // Clock changes can reanchor the wall deadline. Refresh the
+                // confirmation action so its exact-cycle ticket stays valid.
+                notificationManager.notify(
+                    AlarmNotificationFactory.snoozeConfirmationNotificationId(session.alarmId),
+                    notificationFactory.buildSnoozeConfirmation(
+                        alarmId = session.alarmId,
+                        sessionId = session.sessionId,
+                        snoozeCount = session.snoozeCount,
+                        dueAtMillis = effectiveDueAt,
+                    ),
                 )
             } else if (effectiveDueAt != null && effectiveDueAt <= nowWall) {
                 cancelSnooze(session.alarmId)
                 context.getSystemService(NotificationManager::class.java)
                     .cancel(AlarmNotificationFactory.notificationId(session.alarmId))
+                context.getSystemService(NotificationManager::class.java)
+                    .cancel(AlarmNotificationFactory.snoozeConfirmationNotificationId(session.alarmId))
                 repository.finishOccurrence(
                     session.occurrenceId,
                     session.sessionId,

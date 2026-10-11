@@ -161,6 +161,25 @@ class AlarmPlaybackService : Service() {
                 requestedSessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
                 startId = startId,
             )
+            ACTION_DISMISS_SNOOZE_CONFIRMATION -> {
+                val alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1)
+                val sessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty()
+                if (AlarmSnoozeConfirmationPolicy.matchesPendingSession(
+                        session = sessionStore.load(),
+                        alarmId = alarmId,
+                        sessionId = sessionId,
+                        snoozeCount = intent.getIntExtra(
+                            AlarmScheduler.EXTRA_SNOOZE_COUNT,
+                            SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+                        ),
+                        dueAtMillis = intent.getLongExtra(AlarmScheduler.EXTRA_TRIGGER_AT, -1L),
+                    )
+                ) {
+                    dismissAlarm(alarmId, sessionId, startId)
+                } else {
+                    rejectStartIfIdle(startId)
+                }
+            }
             ACTION_CANCEL -> cancelAlarm(
                 alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1),
                 requestedSessionId = intent.getStringExtra(AlarmScheduler.EXTRA_SESSION_ID).orEmpty(),
@@ -571,13 +590,10 @@ class AlarmPlaybackService : Service() {
             rejectStartIfIdle(startId)
             return
         }
-        val dismissDelaySeconds = AlarmMediaDuration.effectiveDismissDelaySeconds(this, alarm)
         if (
             !AlarmSnoozePolicy.canSnooze(
                 alarm = alarm,
                 session = previousSession,
-                nowMillis = System.currentTimeMillis(),
-                delaySeconds = dismissDelaySeconds,
             )
         ) {
             return
@@ -633,7 +649,12 @@ class AlarmPlaybackService : Service() {
         )
         notificationManager.notify(
             AlarmNotificationFactory.snoozeConfirmationNotificationId(alarmId),
-            notificationFactory.buildSnoozeConfirmation(alarmId, dueAtMillis),
+            notificationFactory.buildSnoozeConfirmation(
+                alarmId = alarmId,
+                sessionId = snoozedSession.sessionId,
+                snoozeCount = snoozedSession.snoozeCount,
+                dueAtMillis = dueAtMillis,
+            ),
         )
         stopSelf()
     }
@@ -840,6 +861,8 @@ class AlarmPlaybackService : Service() {
     companion object {
         private const val ACTION_START = "com.routinealarm.app.action.START_ALARM"
         private const val ACTION_DISMISS = "com.routinealarm.app.action.DISMISS_ALARM"
+        private const val ACTION_DISMISS_SNOOZE_CONFIRMATION =
+            "com.routinealarm.app.action.DISMISS_SNOOZE_CONFIRMATION"
         private const val ACTION_CANCEL = "com.routinealarm.app.action.CANCEL_ALARM"
         private const val ACTION_SNOOZE = "com.routinealarm.app.action.SNOOZE_ALARM"
         private const val ACTION_ENSURE_VISIBLE = "com.routinealarm.app.action.ENSURE_VISIBLE"
@@ -875,6 +898,20 @@ class AlarmPlaybackService : Service() {
                 .setAction(ACTION_DISMISS)
                 .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
                 .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
+
+        fun dismissSnoozeConfirmationIntent(
+            context: Context,
+            alarmId: Int,
+            sessionId: String,
+            snoozeCount: Int,
+            dueAtMillis: Long,
+        ): Intent = Intent(context, AlarmPlaybackService::class.java)
+            .setAction(ACTION_DISMISS_SNOOZE_CONFIRMATION)
+            .setData(Uri.parse("routinealarm://snooze-confirm/$alarmId/$sessionId/$snoozeCount/$dueAtMillis"))
+            .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+            .putExtra(AlarmScheduler.EXTRA_SESSION_ID, sessionId)
+            .putExtra(AlarmScheduler.EXTRA_SNOOZE_COUNT, snoozeCount)
+            .putExtra(AlarmScheduler.EXTRA_TRIGGER_AT, dueAtMillis)
 
         fun snoozeIntent(
             context: Context,

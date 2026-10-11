@@ -143,13 +143,30 @@ class AlarmNotificationFactory(private val context: Context) {
         )
     }
 
-    fun buildSnoozeConfirmation(alarmId: Int, dueAtMillis: Long): Notification {
+    fun buildSnoozeConfirmation(
+        alarmId: Int,
+        sessionId: String,
+        snoozeCount: Int,
+        dueAtMillis: Long,
+    ): Notification {
         val appIntent = PendingIntent.getActivity(
             context,
             alarmId + CONFIRMATION_ACTIVITY_REQUEST_OFFSET,
             Intent(context, MainActivity::class.java)
                 .putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val dismissIntent = PendingIntent.getService(
+            context,
+            alarmId + SNOOZE_CONFIRMATION_DISMISS_OFFSET,
+            AlarmPlaybackService.dismissSnoozeConfirmationIntent(
+                context = context,
+                alarmId = alarmId,
+                sessionId = sessionId,
+                snoozeCount = snoozeCount,
+                dueAtMillis = dueAtMillis,
+            ),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(context, CHANNEL_ID)
@@ -161,8 +178,10 @@ class AlarmNotificationFactory(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
-            .setTimeoutAfter(SNOOZE_CONFIRMATION_TIMEOUT_MILLIS)
+            .setOnlyAlertOnce(true)
+            .setTimeoutAfter((dueAtMillis - System.currentTimeMillis()).coerceAtLeast(1L))
             .setContentIntent(appIntent)
+            .addAction(R.drawable.ic_alarm, "알람 해제", dismissIntent)
             .build()
     }
 
@@ -218,6 +237,6 @@ class AlarmNotificationFactory(private val context: Context) {
         private const val SNOOZE_REQUEST_OFFSET = 50_000
         private const val CONFIRMATION_ACTIVITY_REQUEST_OFFSET = 70_000
         private const val PRE_ALERT_ACTIVITY_REQUEST_OFFSET = 80_000
-        private const val SNOOZE_CONFIRMATION_TIMEOUT_MILLIS = 15_000L
+        private const val SNOOZE_CONFIRMATION_DISMISS_OFFSET = 90_000
     }
 }

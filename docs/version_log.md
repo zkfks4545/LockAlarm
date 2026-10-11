@@ -1,16 +1,16 @@
 # 루틴 알람 버전·빌드 내역
 
-작성 기준: 2026-10-08 (Asia/Seoul)
+작성 기준: 2026-10-11 (Asia/Seoul)
 
-v0.15.25에는 반복 알람의 `내일 다시 켜기`(실제 내일 울리면 `내일 알람이 울립니다`, 더 늦게 울리면 실제 다음 날짜 표시)와 모든 활성 알람의 10분 전 예고·이번 1회 건너뛰기가 포함됩니다. 2026-10-08 동일 버전 교체본에서는 카드 높이를 190dp로 되돌리고 상태 문구를 날짜·반복 표시 옆으로 옮겼으며, `예약 취소` 버튼을 제거했습니다. 타이머 완료 전 스누즈는 여전히 허용하지 않습니다.
+v0.15.26은 종료 타이머가 남아 있어도 5분 스누즈를 허용하고, `5분 뒤에 알람이 울립니다.` 확인 알림에서 현재 스누즈를 최종 해제할 수 있게 합니다. v0.15.25의 반복 알람 재개·10분 전 예고·카드 간결화는 유지합니다. 새 기능의 실제 기기 동작은 아직 검증하지 않았습니다.
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.25**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.26**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 40
-- `versionName`: `0.15.25`
-- 최신 배포 타깃: [`LockAlarm-v0.15.25.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.25/LockAlarm-v0.15.25.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
+- `versionCode`: 41
+- `versionName`: `0.15.26`
+- 최신 배포 타깃: [`LockAlarm-v0.15.26.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.26/LockAlarm-v0.15.26.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 2026-10-06에 같은 v0.15.24의 정식 APK를 다시 교체했습니다. 이전 정식 APK SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`는 현재 다운로드 자산의 해시가 아닙니다.
@@ -19,6 +19,7 @@ v0.15.25에는 반복 알람의 `내일 다시 켜기`(실제 내일 울리면 `
 
 | 버전 | 주요 개선 | 검증 결과 | APK |
 |---|---|---|---|
+| 0.15.26 | 종료 타이머 전 5분 스누즈, 스누즈 확인 알림 내 `알람 해제`, 오래된 회차 액션 차단, 버전 코드 41 | `testDebugUnitTest`·`testReleaseUnitTest` 각 164건(실패·오류 0), `lintDebug`·`lintRelease`·`assembleDebug`·`assembleRelease` 통과; APK SHA-256 `FC9C6680311C980F85009CE2940D7D438D6FECC401EE004A6FD09DA09355F1E9`; 실기기 미검증 | `LockAlarm-v0.15.26.apk` |
 | 0.15.25 (동일 버전 교체) | 알람 카드 190dp 복원, 날짜·반복 표시 옆 내일 재개 상태, 예약 취소 제거 | 정식 빌드 JVM 테스트 162건, `lintRelease`, `assembleRelease` 성공; 교체 APK SHA-256 `387072566AE70778EBF23E347B160F5CB8408267C3A2D9347D190DA4C115FAF9`; 실기기 미검증 | `LockAlarm-v0.15.25.apk` |
 | 0.15.25 (최초 공개) | 내일 다시 켜기·예약 상태/다음 울림 날짜, 모든 활성 알람의 10분 전 조용한 예고와 이번 1회만 건너뛰기, Room DB 9 | 정식 빌드 JVM 테스트 162건, `lintRelease`, `assembleRelease` 성공; 최초 APK SHA-256 `77DAC6B5F2E0CDA79781DF399FA7C9A5DD6BA9303E7F80A7871EA4420484537B`; 이후 자산 교체, 실기기 미검증 | `LockAlarm-v0.15.25.apk` |
 | 0.15.24 | YouTube 영상 길이 IFrame 감지, 미확인 시 300초 상한, 수동 미리보기 1회 후 영상 ID별 임시 재사용, Room DB 8 | 동일 버전 교체 정식 빌드 JVM 테스트 152건, `lintRelease` 오류 0건, `assembleRelease` 성공; 공개 정식 APK SHA-256 `6C25ED0D65DFD09F1612E8375C0F24042DA3D96DF2371CCA23E67BE3C8E097CD` | `LockAlarm-v0.15.24.apk` |

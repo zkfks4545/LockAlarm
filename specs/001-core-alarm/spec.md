@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: v0.15.25 Pre-release adds repeat-alarm tomorrow resume and global 10-minute advance reminder with one-occurrence skip (Room v9). The same-version replacement moves resume text beside the schedule label and removes the cancel button. Real-device behavior remains open.
+**Status**: v0.15.26 Pre-release target adds snooze before the dismiss timer and final dismissal from the snooze confirmation notification. v0.15.25 repeat-alarm tomorrow resume and global 10-minute advance reminder remain. Real-device behavior remains open.
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
@@ -12,6 +12,12 @@
 이 명세는 현재 프로토타입 코드보다 우선하는 Living Spec이다. 기존 코드는 요구사항을 검증하는 출발점이며, 명세와 충돌할 경우 계획 단계에서 수정 또는 제거 대상을 결정한다.
 
 ## Clarifications
+
+### Session 2026-10-11 — 타이머 전 스누즈·스누즈 알림 내 해제 (v0.15.26)
+
+- 울림이 시작되면 종료 잠금 타이머가 남아 있어도 5분 스누즈를 사용할 수 있다. 종료 버튼·종료 스와이프의 잠금은 유지하며 스누즈 후 재울림에서는 새 회차의 종료 타이머를 다시 적용한다.
+- `5분 뒤에 알람이 울립니다.` 스누즈 확인 알림에는 명시적인 `알람 해제` 버튼을 둔다. 이 버튼은 현재 스누즈 대기 회차를 최종 종료한다. 같은 세션의 오래된 회차 또는 이미 재울리는 세션에는 적용하지 않는다. 반복 알람의 향후 일정은 유지하며, 10분 전 정규 예고의 `이번 알람 해제`와는 별개다.
+- 시각 변경으로 스누즈 예정 시각이 바뀌면 확인 알림의 해제 액션도 새 예정 시각에 맞춘다. 실제 잠금화면·알림 표시·Doze·OEM 동작은 실기기에서 별도 확인한다.
 
 ### Session 2026-10-08 — 반복 알람 카드 간결화 (v0.15.25 동일 버전 교체)
 

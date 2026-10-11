@@ -86,17 +86,10 @@ object AlarmSnoozePolicy {
     fun canSnooze(
         alarm: AlarmSpec,
         session: AlarmSession,
-        nowMillis: Long,
-        delaySeconds: Int = alarm.dismissDelaySeconds,
     ): Boolean = alarm.enabled &&
         alarm.id == session.alarmId &&
         session.state == AlarmSessionState.FIRING &&
-        session.snoozeCount >= 0 &&
-        AlarmInteractionGate.isUnlocked(
-            ringStartedAtMillis = session.ringStartedAtMillis,
-            delaySeconds = delaySeconds,
-            nowMillis = nowMillis,
-        )
+        session.snoozeCount >= 0
 
     fun snoozedSession(
         session: AlarmSession,
@@ -116,4 +109,22 @@ object AlarmSnoozePolicy {
             state = nextState,
         )
     }
+}
+
+/** A confirmation action can only end the exact snooze cycle that displayed it. */
+object AlarmSnoozeConfirmationPolicy {
+    fun matchesPendingSession(
+        session: AlarmSession?,
+        alarmId: Int,
+        sessionId: String,
+        snoozeCount: Int,
+        dueAtMillis: Long,
+    ): Boolean = session != null &&
+        alarmId > 0 && sessionId.isNotBlank() &&
+        snoozeCount > 0 && dueAtMillis > 0L &&
+        session.alarmId == alarmId &&
+        session.sessionId == sessionId &&
+        session.state == AlarmSessionState.SNOOZED &&
+        session.snoozeCount == snoozeCount &&
+        session.snoozeDueAtMillis == dueAtMillis
 }

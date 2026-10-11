@@ -149,7 +149,7 @@ class AlarmRingUiPolicyTest {
             dismissDelaySeconds = 5,
         )
 
-        assertTrue(AlarmSnoozePolicy.canSnooze(alarm, session, 6_000L))
+        assertTrue(AlarmSnoozePolicy.canSnooze(alarm, session))
         val snoozed = AlarmSnoozePolicy.snoozedSession(
             session = session,
             dueAtMillis = 306_000L,
@@ -160,7 +160,7 @@ class AlarmRingUiPolicyTest {
         assertEquals(session.sessionId, snoozed.sessionId)
         assertEquals(session.ringStartedAtMillis, snoozed.ringStartedAtMillis)
         assertEquals(1, snoozed.snoozeCount)
-        assertFalse(AlarmSnoozePolicy.canSnooze(alarm, snoozed, 6_000L))
+        assertFalse(AlarmSnoozePolicy.canSnooze(alarm, snoozed))
         val resumed = snoozed.copy(
             ringStartedAtMillis = 306_000L,
             snoozeDueAtMillis = null,
@@ -169,11 +169,7 @@ class AlarmRingUiPolicyTest {
             state = AlarmSessionState.FIRING,
         )
         assertTrue(
-            AlarmSnoozePolicy.canSnooze(
-                alarm,
-                resumed,
-                312_000L,
-            ),
+            AlarmSnoozePolicy.canSnooze(alarm, resumed),
         )
         val secondSnoozed = AlarmSnoozePolicy.snoozedSession(
             session = resumed,
@@ -182,5 +178,63 @@ class AlarmRingUiPolicyTest {
             bootCount = 4,
         ) ?: error("expected repeated snooze transition")
         assertEquals(2, secondSnoozed.snoozeCount)
+    }
+
+    @Test
+    fun snoozeIsAvailableBeforeDismissTimerButOnlyForMatchingFiringAlarm() {
+        val session = AlarmSession(
+            alarmId = 7,
+            occurrenceId = "occurrence-7",
+            scheduleRevision = 3L,
+            sessionId = "session-7",
+            startedAtMillis = 1_000L,
+            ringStartedAtMillis = 1_000L,
+            previousBrightness = 80,
+            previousBrightnessMode = 0,
+            previousMediaVolume = 50,
+            restorePolicy = RestorePolicy.RESTORE_PREVIOUS,
+            presetApplied = true,
+            snoozeCount = 0,
+            snoozeDueAtMillis = null,
+            snoozeDueAtElapsedRealtime = null,
+            snoozeBootCount = null,
+            state = AlarmSessionState.FIRING,
+        )
+        val alarm = AlarmSpec(id = 7, triggerAtMillis = 1_000L, enabled = true, dismissDelaySeconds = 60)
+
+        assertFalse(AlarmInteractionGate.isUnlocked(1_000L, 60, 1_001L))
+        assertTrue(AlarmSnoozePolicy.canSnooze(alarm, session))
+        assertFalse(AlarmSnoozePolicy.canSnooze(alarm.copy(id = 8), session))
+        assertFalse(AlarmSnoozePolicy.canSnooze(alarm.copy(enabled = false), session))
+        assertFalse(AlarmSnoozePolicy.canSnooze(alarm, session.copy(state = AlarmSessionState.SNOOZED)))
+    }
+
+    @Test
+    fun snoozeConfirmationRejectsOldCycleOrRingingSession() {
+        val pending = AlarmSession(
+            alarmId = 7,
+            occurrenceId = "occurrence-7",
+            scheduleRevision = 3L,
+            sessionId = "session-7",
+            startedAtMillis = 1_000L,
+            ringStartedAtMillis = 1_000L,
+            previousBrightness = 80,
+            previousBrightnessMode = 0,
+            previousMediaVolume = 50,
+            restorePolicy = RestorePolicy.RESTORE_PREVIOUS,
+            presetApplied = true,
+            snoozeCount = 2,
+            snoozeDueAtMillis = 301_000L,
+            snoozeDueAtElapsedRealtime = 301_000L,
+            snoozeBootCount = 1,
+            state = AlarmSessionState.SNOOZED,
+        )
+
+        assertTrue(AlarmSnoozeConfirmationPolicy.matchesPendingSession(pending, 7, "session-7", 2, 301_000L))
+        assertFalse(AlarmSnoozeConfirmationPolicy.matchesPendingSession(pending, 7, "session-7", 1, 301_000L))
+        assertFalse(AlarmSnoozeConfirmationPolicy.matchesPendingSession(pending, 7, "session-7", 2, 300_000L))
+        assertFalse(AlarmSnoozeConfirmationPolicy.matchesPendingSession(pending, 7, "old-session", 2, 301_000L))
+        assertFalse(AlarmSnoozeConfirmationPolicy.matchesPendingSession(pending.copy(state = AlarmSessionState.FIRING), 7, "session-7", 2, 301_000L))
+        assertFalse(AlarmSnoozeConfirmationPolicy.matchesPendingSession(null, 7, "session-7", 2, 301_000L))
     }
 }
