@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: v0.15.27 Pre-release target adds per-alarm snooze lock timer modes. v0.15.26 early snooze and snooze-confirmation dismissal remain. Real-device behavior remains open.
+**Status**: v0.15.28 Pre-release target adds the upper-left circular snooze timer. v0.15.27 per-alarm snooze lock timer modes remain. Real-device behavior remains open.
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
@@ -12,6 +12,11 @@
 이 명세는 현재 프로토타입 코드보다 우선하는 Living Spec이다. 기존 코드는 요구사항을 검증하는 출발점이며, 명세와 충돌할 경우 계획 단계에서 수정 또는 제거 대상을 결정한다.
 
 ## Clarifications
+
+### Session 2026-11-10 — 스누즈 타이머의 원형 표시 (v0.15.28)
+
+- **SNOOZE-TIMER-04** 스누즈 잠금 시간이 0초보다 길면 종료 타이머와 동일한 원형 진행 UI를 왼쪽 상단에 표시하고 종료 타이머는 오른쪽 상단에 유지한다. 각각 스누즈/종료 이름과 완료 표식을 구분한다. 기존 하단 문구형 스누즈 카운트다운은 제거한다.
+- 좁은 화면에서는 중앙 알람 제목을 원형 타이머 아래로 내려 겹침을 방지한다. 스누즈 잠금·서비스 액션 검증·5분 재울림 정책은 바꾸지 않는다. 실제 기기 레이아웃은 별도 확인한다.
 
 ### Session 2026-11-10 — 스누즈 잠금 타이머 (v0.15.27)
 

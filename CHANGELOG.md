@@ -1,6 +1,12 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.27**입니다. 최신 정식 서명 배포 대상은 `LockAlarm-v0.15.27.apk`입니다. `app/build/outputs/apk/debug/app-debug.apk`는 개발용 서명 APK이므로 공개 배포본과 구분해야 합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.28**입니다. 최신 정식 서명 배포 대상은 `LockAlarm-v0.15.28.apk`입니다. `app/build/outputs/apk/debug/app-debug.apk`는 개발용 서명 APK이므로 공개 배포본과 구분해야 합니다.
+
+## 0.15.28 (2026-11-10) — 스누즈 원형 타이머
+
+- 스누즈 잠금 타이머를 하단 문구형 표시에서 왼쪽 상단의 원형 진행 타이머로 바꿨습니다. 오른쪽 상단의 알람 종료 원형 타이머와 같은 크기·진행 표시를 사용하고 완료 표식과 이름으로 두 동작을 구별합니다.
+- 좁은 화면에서는 두 타이머와 가운데 알람 제목이 겹치지 않도록 제목을 아래로 배치합니다. 잠금 시간, 스누즈 예약, 저장 데이터는 변경하지 않았습니다. `versionName 0.15.28`·`versionCode 43`입니다.
+- `:app:testDebugUnitTest`·`:app:testReleaseUnitTest` 각 165건(실패·오류 0), `lintDebug`·`lintRelease` 오류 0건, `assembleDebug`·`assembleRelease` 성공. 정식 APK SHA-256은 `3CD17D24165463FC106C6378F921AA04A63AE8460138EE248B93FC67CFF294E2`, 인증서 SHA-256은 기존 정식 배포본과 같은 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`입니다. 실기기 레이아웃은 미검증입니다.
 
 ## 0.15.27 (2026-11-10) — 스누즈 잠금 타이머
 

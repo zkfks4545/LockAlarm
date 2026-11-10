@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Tests-165%20Passed-brightgreen?style=flat-square" alt="165 Tests Passed">
-  <img src="https://img.shields.io/badge/Release-v0.15.27-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Release-v0.15.28-blue?style=flat-square" alt="Release">
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
 </p>
 
@@ -18,12 +18,12 @@
 
 최신 정식 서명 APK는 GitHub **Pre-release**에서 다운로드할 수 있습니다. 중요한 알람에 사용하기 전에는 본인 기기에서 직접 시험하세요.
 
-- **최신 버전**: [`v0.15.27` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.27)
-- **APK 다운로드**: [LockAlarm-v0.15.27.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.27/LockAlarm-v0.15.27.apk)
-- **APK SHA-256**: `EFD52D638C883D1BCE9A7CCAC56DB1A1F6EDADC09DBC603B36ACA5035C5FC4C6`
+- **최신 버전**: [`v0.15.28` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.28)
+- **APK 다운로드**: [LockAlarm-v0.15.28.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.28/LockAlarm-v0.15.28.apk)
+- **APK SHA-256**: `3CD17D24165463FC106C6378F921AA04A63AE8460138EE248B93FC67CFF294E2`
 - **서명 인증서 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (v0.15.23 정식 배포본과 동일)
 
-> ⚠️ **2026-11-10 새 버전**: v0.15.27에서는 알람별 스누즈 잠금 타이머를 `없음`·`종료와 동일`·`별도 설정` 중 선택할 수 있습니다. 기존 알람은 즉시 스누즈를 유지하며, Room 9→10 마이그레이션으로 설정을 보존합니다. 정식 서명 v0.15.26 설치본과 같은 인증서를 사용합니다. 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요. 실기기 동작은 아직 검증하지 않았습니다.
+> ⚠️ **2026-11-10 새 버전**: v0.15.28에서는 스누즈 잠금 시간을 왼쪽 상단의 원형 타이머로 보여줍니다. 오른쪽 종료 타이머와 이름·완료 표식을 구분하고, 좁은 화면의 제목 겹침을 줄였습니다. 정식 서명 v0.15.27 설치본과 같은 인증서를 사용합니다. 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요. 실기기 화면 배치는 아직 검증하지 않았습니다.
 
 ---
 

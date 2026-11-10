@@ -162,14 +162,19 @@ class AlarmOverlayController(private val context: Context) {
                 createAlarmHeader(alarm),
                 FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
                     gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                    topMargin = dp(24)
+                    topMargin = if (snoozeDelaySeconds > 0 &&
+                        context.resources.displayMetrics.widthPixels < dp(420)
+                    ) dp(112) else dp(24)
                 },
             )
             addView(
-                CircularDismissView(
+                CircularActionTimerView(
                     context = context,
                     ringStartedAtMillis = session.ringStartedAtMillis,
                     delaySeconds = delaySeconds,
+                    actionLabel = "알람 종료",
+                    completeGlyph = "×",
+                    shortLabel = "끄기",
                 ),
                 FrameLayout.LayoutParams(dp(80), dp(80)).apply {
                     gravity = Gravity.TOP or Gravity.END
@@ -177,6 +182,23 @@ class AlarmOverlayController(private val context: Context) {
                     marginEnd = dp(20)
                 },
             )
+            if (snoozeDelaySeconds > 0) {
+                addView(
+                    CircularActionTimerView(
+                        context = context,
+                        ringStartedAtMillis = session.ringStartedAtMillis,
+                        delaySeconds = snoozeDelaySeconds,
+                        actionLabel = "스누즈",
+                        completeGlyph = "↻",
+                        shortLabel = "스누즈",
+                    ),
+                    FrameLayout.LayoutParams(dp(80), dp(80)).apply {
+                        gravity = Gravity.TOP or Gravity.START
+                        topMargin = dp(20)
+                        marginStart = dp(20)
+                    },
+                )
+            }
             // The swipe gesture view spans the bottom action area so the indicator
             // is drawn in the widened gap between the snooze and dismiss buttons,
             // while capturing upward swipe gestures starting from the lower screen.
@@ -199,16 +221,6 @@ class AlarmOverlayController(private val context: Context) {
                     bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP)
                 },
             )
-            if (snoozeDelaySeconds > 0) {
-                addView(
-                    SnoozeCountdownView(context, snoozeUnlockAtMillis),
-                    FrameLayout.LayoutParams(dp(ACTION_BUTTON_MAX_WIDTH_DP + 32), dp(30)).apply {
-                        gravity = Gravity.BOTTOM or Gravity.START
-                        marginStart = dp(ACTION_ROW_HORIZONTAL_PADDING_DP)
-                        bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP + ACTION_ROW_HEIGHT_DP + 8)
-                    },
-                )
-            }
         }
     }
 
@@ -529,46 +541,13 @@ private class AlarmTimedActionButton(
     }
 }
 
-@SuppressLint("ViewConstructor")
-private class SnoozeCountdownView(
-    context: Context,
-    private val unlockAtMillis: Long,
-) : TextView(context) {
-    private val handler = Handler(Looper.getMainLooper())
-    private val refresh = object : Runnable {
-        override fun run() {
-            val remaining = AlarmTimerPolicy.remainingSecondsUntil(
-                unlockAtMillis,
-                System.currentTimeMillis(),
-            )
-            text = if (remaining == 0L) "스누즈 가능" else "스누즈까지 ${remaining}초"
-            contentDescription = text
-            if (remaining > 0L) handler.postDelayed(this, 250L)
-        }
-    }
-
-    init {
-        gravity = Gravity.CENTER
-        textSize = 14f
-        setTextColor(Color.WHITE)
-        background = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = 14f * resources.displayMetrics.density
-            setColor(Color.argb(180, 0, 0, 0))
-        }
-        refresh.run()
-    }
-
-    override fun onDetachedFromWindow() {
-        handler.removeCallbacks(refresh)
-        super.onDetachedFromWindow()
-    }
-}
-
-private class CircularDismissView(
+private class CircularActionTimerView(
     context: Context,
     private val ringStartedAtMillis: Long,
     private val delaySeconds: Int,
+    private val actionLabel: String,
+    private val completeGlyph: String,
+    private val shortLabel: String,
 ) : View(context) {
     private val density = resources.displayMetrics.density
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -587,6 +566,9 @@ private class CircularDismissView(
         textAlign = Paint.Align.CENTER
         typeface = android.graphics.Typeface.DEFAULT_BOLD
     }
+    private val subtitlePaint = Paint(textPaint).apply {
+        textSize = 11f * density
+    }
     private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
@@ -598,7 +580,7 @@ private class CircularDismissView(
     init {
         isClickable = false
         isFocusable = false
-        contentDescription = "알람 종료 대기"
+        contentDescription = "$actionLabel 대기"
         handler.post(refresh)
     }
 
@@ -623,13 +605,14 @@ private class CircularDismissView(
         )
         canvas.drawArc(bounds, -90f, 360f * timer.progress, false, progressPaint)
         textPaint.textSize = (if (timer.isComplete) 32f else 18f) * density
-        val label = if (timer.isComplete) "×" else timer.remainingSeconds.toString()
+        val label = if (timer.isComplete) completeGlyph else timer.remainingSeconds.toString()
         val baseline = centerY - (textPaint.ascent() + textPaint.descent()) / 2f
         canvas.drawText(label, centerX, baseline, textPaint)
+        canvas.drawText(shortLabel, centerX, centerY + 27f * density, subtitlePaint)
         contentDescription = if (timer.isComplete) {
-            "알람 종료 타이머 완료"
+            "$actionLabel 타이머 완료"
         } else {
-            "${timer.remainingSeconds}초 뒤 알람을 닫을 수 있음"
+            "${timer.remainingSeconds}초 뒤 $actionLabel 가능"
         }
     }
 

@@ -2,15 +2,15 @@
 
 작성 기준: 2026-11-10 (Asia/Seoul)
 
-v0.15.27은 스누즈 잠금 타이머의 세 모드와 별도 카운트다운, 알림·서비스 스누즈 잠금 검증을 추가합니다. 기존 알람의 즉시 스누즈와 v0.15.26의 스누즈 확인 알림 해제는 유지합니다. 새 기능의 실제 기기 동작은 아직 검증하지 않았습니다.
+v0.15.28은 스누즈 잠금 타이머를 왼쪽 상단의 원형 진행 표시로 바꾸고, 종료 타이머를 오른쪽에 유지합니다. 기존 알람 설정·스누즈 잠금 정책은 유지합니다. 새 UI의 실제 기기 레이아웃은 아직 검증하지 않았습니다.
 
 이 문서는 `CHANGELOG.md`, 프로젝트 명세 문서, `outputs` 폴더의 APK 산출물을 기준으로 정리한 버전별 개선 및 빌드 기록이다.
 
-현재 앱 버전은 **0.15.27**이며, Gradle 설정은 다음과 같다.
+현재 앱 버전은 **0.15.28**이며, Gradle 설정은 다음과 같다.
 
-- `versionCode`: 42
-- `versionName`: `0.15.27`
-- 최신 배포 타깃: [`LockAlarm-v0.15.27.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.27/LockAlarm-v0.15.27.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
+- `versionCode`: 43
+- `versionName`: `0.15.28`
+- 최신 배포 타깃: [`LockAlarm-v0.15.28.apk`](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.28/LockAlarm-v0.15.28.apk) (GitHub Pre-release, 정식 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`)
 - 개발용 빌드 검증 명령: `gradlew.bat testDebugUnitTest lintDebug assembleDebug`
 
 2026-10-06에 같은 v0.15.24의 정식 APK를 다시 교체했습니다. 이전 정식 APK SHA-256 `4A923D46D49BD5CCF2D44C532A111D24D52190382FCF521B9F8CE20974ABDA3E`는 현재 다운로드 자산의 해시가 아닙니다.
@@ -19,6 +19,7 @@ v0.15.27은 스누즈 잠금 타이머의 세 모드와 별도 카운트다운, 
 
 | 버전 | 주요 개선 | 검증 결과 | APK |
 |---|---|---|---|
+| 0.15.28 | 스누즈 원형 타이머를 왼쪽 상단, 알람 종료 타이머를 오른쪽 상단에 나란히 표시하고 좁은 화면에서 제목 겹침 완화, 버전 코드 43 | `testDebugUnitTest`·`testReleaseUnitTest` 각 165건(실패·오류 0), `lintDebug`·`lintRelease` 오류 0건, `assembleDebug`·`assembleRelease` 성공; APK SHA-256 `3CD17D24165463FC106C6378F921AA04A63AE8460138EE248B93FC67CFF294E2`; 실기기 미검증 | `LockAlarm-v0.15.28.apk` |
 | 0.15.27 | 알람별 스누즈 잠금 타이머 `없음`·`종료와 동일`·`별도 설정`, 별도 카운트다운, 알림·서비스 우회 차단, Room DB 10, 버전 코드 42 | `testDebugUnitTest`·`testReleaseUnitTest` 각 165건(실패·오류 0), `lintDebug`·`lintRelease` 오류 0건, `assembleDebug`·`assembleRelease` 성공; APK SHA-256 `EFD52D638C883D1BCE9A7CCAC56DB1A1F6EDADC09DBC603B36ACA5035C5FC4C6`; 실기기 미검증 | `LockAlarm-v0.15.27.apk` |
 | 0.15.26 | 종료 타이머 전 5분 스누즈, 스누즈 확인 알림 내 `알람 해제`, 오래된 회차 액션 차단, 버전 코드 41 | `testDebugUnitTest`·`testReleaseUnitTest` 각 164건(실패·오류 0), `lintDebug`·`lintRelease`·`assembleDebug`·`assembleRelease` 통과; APK SHA-256 `FC9C6680311C980F85009CE2940D7D438D6FECC401EE004A6FD09DA09355F1E9`; 실기기 미검증 | `LockAlarm-v0.15.26.apk` |
 | 0.15.25 (동일 버전 교체) | 알람 카드 190dp 복원, 날짜·반복 표시 옆 내일 재개 상태, 예약 취소 제거 | 정식 빌드 JVM 테스트 162건, `lintRelease`, `assembleRelease` 성공; 교체 APK SHA-256 `387072566AE70778EBF23E347B160F5CB8408267C3A2D9347D190DA4C115FAF9`; 실기기 미검증 | `LockAlarm-v0.15.25.apk` |
