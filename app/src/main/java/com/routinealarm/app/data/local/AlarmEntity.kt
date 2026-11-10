@@ -21,6 +21,8 @@ data class AlarmEntity(
     val mediaVolumePercent: Int,
     val dismissDelaySeconds: Int,
     @ColumnInfo(defaultValue = "1") val dismissTimerEnabled: Boolean,
+    @ColumnInfo(defaultValue = "'NONE'") val snoozeTimerMode: String,
+    @ColumnInfo(defaultValue = "5") val snoozeDelaySeconds: Int,
     val restorePolicy: String,
     val contentMode: String,
     val visualUri: String?,

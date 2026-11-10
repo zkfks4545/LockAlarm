@@ -1,6 +1,14 @@
 # LockAlarm 변경 내역
 
-이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.26**입니다. 최신 정식 서명 배포 대상은 `LockAlarm-v0.15.26.apk`입니다. `app/build/outputs/apk/debug/app-debug.apk`는 개발용 서명 APK이므로 공개 배포본과 구분해야 합니다.
+이 문서는 사용자 피드백을 반영해 통합 APK에 적용한 주요 패치를 정리합니다. 앱 표시 이름은 **LockAlarm**, 최신 앱 버전은 **0.15.27**입니다. 최신 정식 서명 배포 대상은 `LockAlarm-v0.15.27.apk`입니다. `app/build/outputs/apk/debug/app-debug.apk`는 개발용 서명 APK이므로 공개 배포본과 구분해야 합니다.
+
+## 0.15.27 (2026-11-10) — 스누즈 잠금 타이머
+
+- 알람별로 스누즈 잠금 타이머를 `없음`·`종료와 동일`·`별도 설정` 중 선택할 수 있게 했습니다. 기존 알람은 즉시 스누즈를 유지합니다. 별도 시간은 종료 타이머와 독립적이며 선택 미디어 길이 상한을 따릅니다.
+- 울림 화면에 스누즈 남은 시간을 별도로 표시하고 스누즈 버튼·알림 액션·서비스 처리에 동일한 시간 조건을 적용합니다. 재울림 때 새 회차의 타이머가 시작됩니다. Room 스키마를 9→10으로 이관합니다.
+- `versionName 0.15.27`·`versionCode 42`로 갱신했습니다. 정식 APK SHA-256은 `EFD52D638C883D1BCE9A7CCAC56DB1A1F6EDADC09DBC603B36ACA5035C5FC4C6`이고 기존 정식 서명 인증서 SHA-256 `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8`을 사용합니다.
+- 로컬 `:app:testDebugUnitTest` 165건(실패·오류 0), `:app:lintDebug`, `:app:assembleDebug` 성공. 실제 Room 업그레이드와 잠금화면·알림 UX는 기기에서 확인해야 합니다.
+- 정식 `tools/release.ps1 -Action Build`로 `:app:testReleaseUnitTest` 165건(실패·오류 0), `:app:lintRelease` 오류 0건, `:app:assembleRelease` 성공. 패키지 `com.routinealarm.app`·버전 0.15.27/코드 42·비디버그 APK를 확인했습니다.
 
 ## 0.15.26 (2026-10-11) — 타이머 전 스누즈·스누즈 알림 해제
 

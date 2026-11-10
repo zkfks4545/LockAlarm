@@ -4,9 +4,11 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import com.routinealarm.app.alarm.DismissTimerPolicy
+import com.routinealarm.app.alarm.AlarmSnoozePolicy
 import com.routinealarm.app.model.AlarmSpec
 import com.routinealarm.app.model.ContentMode
 import com.routinealarm.app.model.VisualKind
+import com.routinealarm.app.model.SnoozeTimerMode
 
 object AlarmMediaDuration {
     data class LookupResult(val maxDurationSeconds: Int?)
@@ -38,6 +40,28 @@ object AlarmMediaDuration {
         return DismissTimerPolicy.clampDelaySeconds(
             delaySeconds = alarm.dismissDelaySeconds,
             maxDelaySeconds = maxDelaySeconds,
+        )
+    }
+
+    fun effectiveSnoozeDelaySeconds(context: Context, alarm: AlarmSpec): Int {
+        if (alarm.snoozeTimerMode == SnoozeTimerMode.NONE) return 0
+        val dismissDelay = if (alarm.snoozeTimerMode == SnoozeTimerMode.MATCH_DISMISS) {
+            effectiveDismissDelaySeconds(context, alarm)
+        } else {
+            0
+        }
+        val maxDelay = if (alarm.snoozeTimerMode == SnoozeTimerMode.INDEPENDENT) {
+            DismissTimerPolicy.maxDelaySecondsForContent(
+                contentMode = alarm.contentMode,
+                mediaDurationSeconds = lookup(context, alarm).maxDurationSeconds,
+            )
+        } else {
+            dismissDelay
+        }
+        return AlarmSnoozePolicy.effectiveDelaySeconds(
+            alarm = alarm,
+            maxDelaySeconds = maxDelay,
+            dismissDelaySeconds = dismissDelay,
         )
     }
 

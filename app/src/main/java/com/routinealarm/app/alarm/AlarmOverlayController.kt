@@ -143,6 +143,11 @@ class AlarmOverlayController(private val context: Context) {
             ringStartedAtMillis = session.ringStartedAtMillis,
             delaySeconds = delaySeconds,
         )
+        val snoozeDelaySeconds = AlarmMediaDuration.effectiveSnoozeDelaySeconds(context, alarm)
+        val snoozeUnlockAtMillis = AlarmInteractionGate.unlockAtMillis(
+            ringStartedAtMillis = session.ringStartedAtMillis,
+            delaySeconds = snoozeDelaySeconds,
+        )
         return FrameLayout(context).apply {
             setBackgroundColor(Color.BLACK)
             addView(mediaView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
@@ -188,12 +193,22 @@ class AlarmOverlayController(private val context: Context) {
                 },
             )
             addView(
-                createActionRow(alarm, session, unlockAtMillis),
+                createActionRow(alarm, session, unlockAtMillis, snoozeUnlockAtMillis),
                 FrameLayout.LayoutParams(MATCH_PARENT, dp(ACTION_ROW_HEIGHT_DP)).apply {
                     gravity = Gravity.BOTTOM
                     bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP)
                 },
             )
+            if (snoozeDelaySeconds > 0) {
+                addView(
+                    SnoozeCountdownView(context, snoozeUnlockAtMillis),
+                    FrameLayout.LayoutParams(dp(ACTION_BUTTON_MAX_WIDTH_DP + 32), dp(30)).apply {
+                        gravity = Gravity.BOTTOM or Gravity.START
+                        marginStart = dp(ACTION_ROW_HORIZONTAL_PADDING_DP)
+                        bottomMargin = dp(ACTION_ROW_BOTTOM_MARGIN_DP + ACTION_ROW_HEIGHT_DP + 8)
+                    },
+                )
+            }
         }
     }
 
@@ -206,6 +221,7 @@ class AlarmOverlayController(private val context: Context) {
         alarm: AlarmSpec,
         session: AlarmSession,
         unlockAtMillis: Long,
+        snoozeUnlockAtMillis: Long,
     ): View {
         val hasSnooze = session.state == AlarmSessionState.FIRING && session.snoozeCount >= 0
         val horizontalPadding = dp(ACTION_ROW_HORIZONTAL_PADDING_DP)
@@ -224,7 +240,7 @@ class AlarmOverlayController(private val context: Context) {
                     gravity = Gravity.CENTER_VERTICAL
                     if (hasSnooze) {
                         addView(
-                            createSnoozeControl(alarm, session),
+                            createSnoozeControl(alarm, session, snoozeUnlockAtMillis),
                             LinearLayout.LayoutParams(buttonWidth, MATCH_PARENT),
                         )
                         // Widened center gap: transparent space allowing the gesture view behind to shine through
@@ -289,10 +305,11 @@ class AlarmOverlayController(private val context: Context) {
     private fun createSnoozeControl(
         alarm: AlarmSpec,
         session: AlarmSession,
+        snoozeUnlockAtMillis: Long,
     ): View = AlarmTimedActionButton(
         context = context,
-        unlockAtMillis = 0L,
-        lockedDescription = "5분 스누즈",
+        unlockAtMillis = snoozeUnlockAtMillis,
+        lockedDescription = "스누즈 타이머 완료 뒤 5분 스누즈 가능",
         activeDescription = "5분 스누즈",
         action = {
             context.startService(
@@ -509,6 +526,42 @@ private class AlarmTimedActionButton(
         val unlocked = isUnlocked()
         alpha = if (unlocked) 1f else 0.48f
         contentDescription = if (unlocked) activeDescription else lockedDescription
+    }
+}
+
+@SuppressLint("ViewConstructor")
+private class SnoozeCountdownView(
+    context: Context,
+    private val unlockAtMillis: Long,
+) : TextView(context) {
+    private val handler = Handler(Looper.getMainLooper())
+    private val refresh = object : Runnable {
+        override fun run() {
+            val remaining = AlarmTimerPolicy.remainingSecondsUntil(
+                unlockAtMillis,
+                System.currentTimeMillis(),
+            )
+            text = if (remaining == 0L) "스누즈 가능" else "스누즈까지 ${remaining}초"
+            contentDescription = text
+            if (remaining > 0L) handler.postDelayed(this, 250L)
+        }
+    }
+
+    init {
+        gravity = Gravity.CENTER
+        textSize = 14f
+        setTextColor(Color.WHITE)
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 14f * resources.displayMetrics.density
+            setColor(Color.argb(180, 0, 0, 0))
+        }
+        refresh.run()
+    }
+
+    override fun onDetachedFromWindow() {
+        handler.removeCallbacks(refresh)
+        super.onDetachedFromWindow()
     }
 }
 

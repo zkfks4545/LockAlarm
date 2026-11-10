@@ -3,14 +3,14 @@
 <p align="left">
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-green?style=flat-square&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=flat-square&logo=kotlin" alt="Kotlin">
-  <img src="https://img.shields.io/badge/Tests-164%20Passed-brightgreen?style=flat-square" alt="164 Tests Passed">
-  <img src="https://img.shields.io/badge/Release-v0.15.26-blue?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/badge/Tests-165%20Passed-brightgreen?style=flat-square" alt="165 Tests Passed">
+  <img src="https://img.shields.io/badge/Release-v0.15.27-blue?style=flat-square" alt="Release">
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20FSM-orange?style=flat-square" alt="Architecture">
 </p>
 
 안드로이드의 엄격한 절전 정책(Doze 모드)과 잠금 화면 환경에서도 신뢰성 있게 동작하도록 설계된 **오프라인 우선(Offline-first) 개인용 Android 알람 애플리케이션**입니다.
 
-정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행합니다. 핵심 로직에 대한 **164개의 JVM 단위 테스트**가 통과했지만, 이는 실기기에서의 울림을 증명하지 않습니다.
+정해진 시각에 로컬 미디어(이미지·GIF·영상·음악) 또는 공식 YouTube 플레이어를 전체 화면으로 실행합니다. 핵심 로직에 대한 **165개의 JVM 단위 테스트**가 통과했지만, 이는 실기기에서의 울림을 증명하지 않습니다.
 
 ---
 
@@ -18,12 +18,12 @@
 
 최신 정식 서명 APK는 GitHub **Pre-release**에서 다운로드할 수 있습니다. 중요한 알람에 사용하기 전에는 본인 기기에서 직접 시험하세요.
 
-- **최신 버전**: [`v0.15.26` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.26)
-- **APK 다운로드**: [LockAlarm-v0.15.26.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.26/LockAlarm-v0.15.26.apk)
-- **APK SHA-256**: `FC9C6680311C980F85009CE2940D7D438D6FECC401EE004A6FD09DA09355F1E9`
+- **최신 버전**: [`v0.15.27` Release](https://github.com/zkfks4545/LockAlarm/releases/tag/v0.15.27)
+- **APK 다운로드**: [LockAlarm-v0.15.27.apk](https://github.com/zkfks4545/LockAlarm/releases/download/v0.15.27/LockAlarm-v0.15.27.apk)
+- **APK SHA-256**: `EFD52D638C883D1BCE9A7CCAC56DB1A1F6EDADC09DBC603B36ACA5035C5FC4C6`
 - **서명 인증서 SHA-256**: `442090DDA070A1F970CEE370A0469DE0E1A560CA0668F71FA984EF0B9DB491D8` (v0.15.23 정식 배포본과 동일)
 
-> ⚠️ **2026-10-11 새 버전**: v0.15.26은 알람 시작 직후 스누즈를 허용하고, `5분 뒤에 알람이 울립니다.` 확인 알림에서 현재 스누즈를 해제할 수 있습니다. 기존 정식 서명 v0.15.25 설치본과 같은 인증서이며 버전 코드는 40→41로 올렸습니다. 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요. 실기기 동작은 아직 검증하지 않았습니다.
+> ⚠️ **2026-11-10 새 버전**: v0.15.27에서는 알람별 스누즈 잠금 타이머를 `없음`·`종료와 동일`·`별도 설정` 중 선택할 수 있습니다. 기존 알람은 즉시 스누즈를 유지하며, Room 9→10 마이그레이션으로 설정을 보존합니다. 정식 서명 v0.15.26 설치본과 같은 인증서를 사용합니다. 개발용 APK가 설치된 기기는 정식 서명 APK로 덮어쓰기 업데이트할 수 없습니다. 앱 삭제 시 알람 데이터가 지워질 수 있으니 [설치 문제 확인](docs/INSTALLATION.md)을 참고하세요. 실기기 동작은 아직 검증하지 않았습니다.
 
 ---
 

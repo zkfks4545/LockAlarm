@@ -95,6 +95,12 @@
 
 ## 정책 결정 대기
 
+- [x] T377 SNOOZE-TIMER-01~03의 세 모드·기본값·수용 기준을 Living Spec에 기록한다.
+- [x] T378 Room 9→10 설정 보존, 편집 UI, 울림 화면 별도 카운트다운, 서비스/알림 우회 차단을 구현한다.
+- [x] T379 JVM 회귀 테스트 165건(실패·오류 0)과 lintDebug·assembleDebug 종료 코드 0을 확인한다.
+- [ ] T380 Galaxy 실기기에서 잠금화면·알림 액션·재울림·프로세스 복구를 확인한다.
+- [x] T381 v0.15.27/코드 42 정식 키로 릴리스 테스트·린트·APK 서명/메타데이터를 확인한다.
+
 - [x] T363 0.15.15 스누즈 예약 인텐트에 회차·예정 시각을 포함하고 Broadcast 수신부에서 현재 세션·회차·due를 검증한다.
 - [x] T364 0.15.15 재생 서비스에서 동일 검증을 재실행하고, 같은 부팅 elapsed/reboot wall-clock fallback과 조기 전달 재예약을 연결한다.
 - [x] T365 0.15.15 검증 정책 테스트와 APK 버전·Living Spec/README/CHANGELOG/version log를 갱신하고 테스트·lint·assembleDebug를 실행한다.

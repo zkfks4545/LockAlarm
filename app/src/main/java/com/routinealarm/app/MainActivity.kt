@@ -97,6 +97,7 @@ import com.routinealarm.app.model.ContentMode
 import com.routinealarm.app.model.RepeatType
 import com.routinealarm.app.model.RestorePolicy
 import com.routinealarm.app.model.SoundSource
+import com.routinealarm.app.model.SnoozeTimerMode
 import com.routinealarm.app.model.VisualKind
 import com.routinealarm.app.ui.RoutineAlarmTheme
 import com.routinealarm.app.ui.AlarmVisual
@@ -1739,6 +1740,17 @@ private fun AlarmEditorScreen(
             }
         }
     }
+    LaunchedEffect(dismissDelayMaxSeconds, alarm.snoozeTimerMode) {
+        if (alarm.snoozeTimerMode == SnoozeTimerMode.INDEPENDENT) {
+            val clamped = DismissTimerPolicy.clampDelaySeconds(
+                alarm.snoozeDelaySeconds,
+                dismissDelayMaxSeconds,
+            )
+            if (clamped != alarm.snoozeDelaySeconds) {
+                onAlarmChange(alarm.copy(snoozeDelaySeconds = clamped))
+            }
+        }
+    }
     var hourText by remember(alarm.id) {
         mutableStateOf((alarm.localTimeMinutes / 60).toString().padStart(2, '0'))
     }
@@ -2093,6 +2105,48 @@ private fun AlarmEditorScreen(
                                     ),
                                 ),
                             )
+                        }
+                    }
+                    Text("스누즈 잠금 타이머", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "알람이 울린 뒤 스누즈 버튼을 언제 사용할지 정합니다. 종료 타이머와 별도로 표시됩니다.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = alarm.snoozeTimerMode == SnoozeTimerMode.NONE,
+                            onClick = { onAlarmChange(alarm.copy(snoozeTimerMode = SnoozeTimerMode.NONE)) },
+                            label = { Text("없음") },
+                        )
+                        FilterChip(
+                            selected = alarm.snoozeTimerMode == SnoozeTimerMode.MATCH_DISMISS,
+                            onClick = { onAlarmChange(alarm.copy(snoozeTimerMode = SnoozeTimerMode.MATCH_DISMISS)) },
+                            label = { Text("종료와 동일") },
+                        )
+                        FilterChip(
+                            selected = alarm.snoozeTimerMode == SnoozeTimerMode.INDEPENDENT,
+                            onClick = { onAlarmChange(alarm.copy(snoozeTimerMode = SnoozeTimerMode.INDEPENDENT)) },
+                            label = { Text("별도 설정") },
+                        )
+                    }
+                    if (alarm.snoozeTimerMode == SnoozeTimerMode.MATCH_DISMISS) {
+                        Text(
+                            if (alarm.dismissTimerEnabled) "스누즈도 종료 타이머 ${dismissDelaySeconds}초 뒤 사용 가능합니다."
+                            else "종료 타이머가 꺼져 있어 스누즈도 즉시 사용 가능합니다.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    if (alarm.snoozeTimerMode == SnoozeTimerMode.INDEPENDENT) {
+                        ValueSlider(
+                            label = "스누즈 버튼 대기 시간",
+                            value = DismissTimerPolicy.clampDelaySeconds(
+                                alarm.snoozeDelaySeconds,
+                                dismissDelayMaxSeconds,
+                            ),
+                            range = 0f..dismissDelayMaxSeconds.toFloat(),
+                            suffix = "초",
+                        ) {
+                            onAlarmChange(alarm.copy(snoozeDelaySeconds = it))
                         }
                     }
                     Row(

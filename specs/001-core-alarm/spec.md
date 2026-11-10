@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-core-alarm`  
 **Created**: 2026-08-01  
-**Status**: v0.15.26 Pre-release target adds snooze before the dismiss timer and final dismissal from the snooze confirmation notification. v0.15.25 repeat-alarm tomorrow resume and global 10-minute advance reminder remain. Real-device behavior remains open.
+**Status**: v0.15.27 Pre-release target adds per-alarm snooze lock timer modes. v0.15.26 early snooze and snooze-confirmation dismissal remain. Real-device behavior remains open.
 **Input**: 지정 시각에 기기 상태를 초기화하고 로컬 콘텐츠 또는 YouTube 임베디드 플레이어를 실행하는 개인용 Android 알람
 
 ## 제품 의도
@@ -12,6 +12,13 @@
 이 명세는 현재 프로토타입 코드보다 우선하는 Living Spec이다. 기존 코드는 요구사항을 검증하는 출발점이며, 명세와 충돌할 경우 계획 단계에서 수정 또는 제거 대상을 결정한다.
 
 ## Clarifications
+
+### Session 2026-11-10 — 스누즈 잠금 타이머 (v0.15.27)
+
+- **SNOOZE-TIMER-01** 알람별 스누즈 버튼 잠금 방식은 `없음`(기본값), `종료와 동일`, `별도 설정` 중 고른다. 기존 알람은 `없음`으로 이관해 v0.15.26의 즉시 스누즈를 유지한다.
+- **SNOOZE-TIMER-02** `종료와 동일`은 종료 타이머의 실제 유효 시간과 같은 시간이며 종료 타이머가 꺼져 있으면 즉시 스누즈할 수 있다. `별도 설정`은 종료 타이머와 독립적인 초 단위 시간이며, 선택 미디어 길이/길이 미확인 fallback 상한을 따른다.
+- **SNOOZE-TIMER-03** 스누즈 대기 시간은 종료 타이머와 구분해 울림 화면에 표시한다. 스누즈 버튼과 울림 알림의 스누즈 액션은 잠금 전 사용할 수 없고 서비스에서도 직접 들어온 오래되거나 이른 요청을 거부한다. 재울림 회차마다 타이머를 새로 시작하고 스누즈 후 다시 울리기까지의 고정 5분은 바꾸지 않는다.
+- **수용 기준** 기존 알람 데이터가 Room 9→10 마이그레이션 후 보존되고, 세 모드·경계 시각·재울림·서비스 우회 거부가 확인되어야 한다. Galaxy/잠금화면/Doze 실기기 확인 전에는 제품 동작 검증 완료로 주장하지 않는다.
 
 ### Session 2026-10-11 — 타이머 전 스누즈·스누즈 알림 내 해제 (v0.15.26)
 

@@ -313,6 +313,8 @@ class AlarmRepository(private val context: Context) {
             0
         },
         dismissTimerEnabled = dismissTimerEnabled,
+        snoozeTimerMode = snoozeTimerMode.name,
+        snoozeDelaySeconds = snoozeDelaySeconds.coerceAtLeast(0),
         restorePolicy = restorePolicy.name,
         contentMode = contentMode.name,
         visualUri = visualUri,
@@ -347,6 +349,8 @@ class AlarmRepository(private val context: Context) {
             0
         },
         dismissTimerEnabled = dismissTimerEnabled,
+        snoozeTimerMode = parseEnum(snoozeTimerMode, com.routinealarm.app.model.SnoozeTimerMode.NONE),
+        snoozeDelaySeconds = snoozeDelaySeconds.coerceAtLeast(0),
         restorePolicy = parseEnum(restorePolicy, RestorePolicy.RESTORE_PREVIOUS),
         contentMode = parseEnum(contentMode, ContentMode.LOCAL),
         visualUri = visualUri,

@@ -44,6 +44,7 @@ class AlarmPlaybackService : Service() {
     private var audioFocusRequest: AudioFocusRequest? = null
     private var hasActiveForegroundSession = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var snoozeUnlockReminder: Runnable? = null
     private var playbackGeneration = 0L
     private var activePlaybackSessionId = ""
     private var volumeRampGeneration = 0L
@@ -417,13 +418,15 @@ class AlarmPlaybackService : Service() {
             isKeyguardLocked = getSystemService(KeyguardManager::class.java).isKeyguardLocked,
             canDrawOverlays = Settings.canDrawOverlays(this),
         ) == AlarmSurfaceTarget.APPLICATION_OVERLAY
+        val ringingSession = sessionStore.load()
+        val snoozeDelaySeconds = AlarmMediaDuration.effectiveSnoozeDelaySeconds(this, alarm)
         val notification = AlarmNotificationFactory(this).buildRinging(
             alarmId = alarm.id,
             sessionId = sessionId,
-            snoozeAvailable = sessionStore.load()?.let {
-                it.state == AlarmSessionState.FIRING && it.snoozeCount >= 0
+            snoozeAvailable = ringingSession?.let {
+                AlarmSnoozePolicy.canSnooze(alarm, it, System.currentTimeMillis(), snoozeDelaySeconds)
             } == true,
-            snoozeCycle = sessionStore.load()?.snoozeCount ?: SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
+            snoozeCycle = ringingSession?.snoozeCount ?: SnoozeDeliveryValidation.NO_SNOOZE_COUNT,
             fullScreen = !canUseUnlockedOverlay,
         )
         val foregroundType = when {
@@ -440,6 +443,7 @@ class AlarmPlaybackService : Service() {
             foregroundType,
         )
         hasActiveForegroundSession = true
+        scheduleSnoozeActionUnlock(alarm.id, sessionId, snoozeDelaySeconds)
         startDeviceVolumeRamp(sessionId)
 
         if (alarm.contentMode == ContentMode.LOCAL && mediaPlayer == null && fallbackTone == null) {
@@ -594,6 +598,8 @@ class AlarmPlaybackService : Service() {
             !AlarmSnoozePolicy.canSnooze(
                 alarm = alarm,
                 session = previousSession,
+                nowMillis = System.currentTimeMillis(),
+                delaySeconds = AlarmMediaDuration.effectiveSnoozeDelaySeconds(this, alarm),
             )
         ) {
             return
@@ -798,6 +804,8 @@ class AlarmPlaybackService : Service() {
     }
 
     private fun releasePlayback() {
+        snoozeUnlockReminder?.let(mainHandler::removeCallbacks)
+        snoozeUnlockReminder = null
         cancelDeviceVolumeRamp()
         cancelVolumeRamp()
         mediaPlayer?.runCatching {
@@ -810,6 +818,44 @@ class AlarmPlaybackService : Service() {
         mainHandler.removeCallbacks(fallbackToneLoop)
         audioFocusRequest?.let(audioManager::abandonAudioFocusRequest)
         audioFocusRequest = null
+    }
+
+    private fun scheduleSnoozeActionUnlock(alarmId: Int, sessionId: String, delaySeconds: Int) {
+        snoozeUnlockReminder?.let(mainHandler::removeCallbacks)
+        snoozeUnlockReminder = null
+        val session = sessionStore.load()?.takeIf {
+            it.alarmId == alarmId && it.sessionId == sessionId && it.state == AlarmSessionState.FIRING
+        } ?: return
+        val remainingMillis = AlarmInteractionGate.unlockAtMillis(
+            session.ringStartedAtMillis,
+            delaySeconds,
+        ) - System.currentTimeMillis()
+        if (remainingMillis <= 0L) return
+        val reminder = Runnable {
+            snoozeUnlockReminder = null
+            val current = sessionStore.load()?.takeIf {
+                it.alarmId == alarmId && it.sessionId == sessionId && it.state == AlarmSessionState.FIRING
+            } ?: return@Runnable
+            val alarm = repository.load(alarmId) ?: return@Runnable
+            val effectiveDelay = AlarmMediaDuration.effectiveSnoozeDelaySeconds(this, alarm)
+            if (!AlarmSnoozePolicy.canSnooze(alarm, current, System.currentTimeMillis(), effectiveDelay)) {
+                scheduleSnoozeActionUnlock(alarmId, sessionId, effectiveDelay)
+                return@Runnable
+            }
+            if (!hasActiveForegroundSession) return@Runnable
+            getSystemService(NotificationManager::class.java).notify(
+                AlarmNotificationFactory.notificationId(alarmId),
+                AlarmNotificationFactory(this).buildRinging(
+                    alarmId = alarmId,
+                    sessionId = sessionId,
+                    snoozeAvailable = true,
+                    fullScreen = false,
+                    snoozeCycle = current.snoozeCount,
+                ),
+            )
+        }
+        snoozeUnlockReminder = reminder
+        mainHandler.postDelayed(reminder, remainingMillis)
     }
 
     override fun onDestroy() {

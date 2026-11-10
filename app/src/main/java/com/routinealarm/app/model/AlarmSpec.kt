@@ -19,6 +19,9 @@ data class AlarmSpec(
     val dismissDelaySeconds: Int = 5,
     /** Whether the dismiss lock timer is enabled. A zero delay is still valid when enabled. */
     val dismissTimerEnabled: Boolean = true,
+    /** Whether snooze is immediate, follows dismissal, or has its own lock timer. */
+    val snoozeTimerMode: SnoozeTimerMode = SnoozeTimerMode.NONE,
+    val snoozeDelaySeconds: Int = 5,
     val restorePolicy: RestorePolicy = RestorePolicy.RESTORE_PREVIOUS,
     val contentMode: ContentMode = ContentMode.LOCAL,
     val visualUri: String? = null,
@@ -48,6 +51,12 @@ enum class RepeatType {
 enum class RestorePolicy {
     RESTORE_PREVIOUS,
     KEEP_CURRENT,
+}
+
+enum class SnoozeTimerMode {
+    NONE,
+    MATCH_DISMISS,
+    INDEPENDENT,
 }
 
 enum class ContentMode {

@@ -1,6 +1,7 @@
 package com.routinealarm.app.alarm
 
 import com.routinealarm.app.model.AlarmSpec
+import com.routinealarm.app.model.SnoozeTimerMode
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -83,13 +84,29 @@ object AlarmDismissGesturePolicy {
 }
 
 object AlarmSnoozePolicy {
+    fun effectiveDelaySeconds(
+        alarm: AlarmSpec,
+        maxDelaySeconds: Int,
+        dismissDelaySeconds: Int,
+    ): Int = when (alarm.snoozeTimerMode) {
+        SnoozeTimerMode.NONE -> 0
+        SnoozeTimerMode.MATCH_DISMISS -> dismissDelaySeconds
+        SnoozeTimerMode.INDEPENDENT -> DismissTimerPolicy.clampDelaySeconds(
+            alarm.snoozeDelaySeconds,
+            maxDelaySeconds,
+        )
+    }
+
     fun canSnooze(
         alarm: AlarmSpec,
         session: AlarmSession,
+        nowMillis: Long = System.currentTimeMillis(),
+        delaySeconds: Int = 0,
     ): Boolean = alarm.enabled &&
         alarm.id == session.alarmId &&
         session.state == AlarmSessionState.FIRING &&
-        session.snoozeCount >= 0
+        session.snoozeCount >= 0 &&
+        AlarmInteractionGate.isUnlocked(session.ringStartedAtMillis, delaySeconds, nowMillis)
 
     fun snoozedSession(
         session: AlarmSession,

@@ -1,6 +1,7 @@
 package com.routinealarm.app.alarm
 
 import com.routinealarm.app.model.AlarmSpec
+import com.routinealarm.app.model.SnoozeTimerMode
 import com.routinealarm.app.model.RestorePolicy
 import java.time.Instant
 import java.time.ZoneId
@@ -207,6 +208,65 @@ class AlarmRingUiPolicyTest {
         assertFalse(AlarmSnoozePolicy.canSnooze(alarm.copy(id = 8), session))
         assertFalse(AlarmSnoozePolicy.canSnooze(alarm.copy(enabled = false), session))
         assertFalse(AlarmSnoozePolicy.canSnooze(alarm, session.copy(state = AlarmSessionState.SNOOZED)))
+    }
+
+    @Test
+    fun snoozeTimerModesAreIndependentAndGateEachRingCycle() {
+        val base = AlarmSpec(
+            id = 7,
+            triggerAtMillis = 1_000L,
+            enabled = true,
+            dismissDelaySeconds = 60,
+        )
+        assertEquals(0, AlarmSnoozePolicy.effectiveDelaySeconds(base, 90, 60))
+        assertEquals(
+            60,
+            AlarmSnoozePolicy.effectiveDelaySeconds(
+                base.copy(snoozeTimerMode = SnoozeTimerMode.MATCH_DISMISS), 90, 60,
+            ),
+        )
+        assertEquals(
+            0,
+            AlarmSnoozePolicy.effectiveDelaySeconds(
+                base.copy(snoozeTimerMode = SnoozeTimerMode.MATCH_DISMISS), 90, 0,
+            ),
+        )
+        assertEquals(
+            12,
+            AlarmSnoozePolicy.effectiveDelaySeconds(
+                base.copy(snoozeTimerMode = SnoozeTimerMode.INDEPENDENT, snoozeDelaySeconds = 12),
+                90, 60,
+            ),
+        )
+        assertEquals(
+            90,
+            AlarmSnoozePolicy.effectiveDelaySeconds(
+                base.copy(snoozeTimerMode = SnoozeTimerMode.INDEPENDENT, snoozeDelaySeconds = 120),
+                90, 60,
+            ),
+        )
+        val session = AlarmSession(
+            alarmId = 7,
+            occurrenceId = "occurrence-7",
+            scheduleRevision = 3L,
+            sessionId = "session-7",
+            startedAtMillis = 1_000L,
+            ringStartedAtMillis = 1_000L,
+            previousBrightness = 80,
+            previousBrightnessMode = 0,
+            previousMediaVolume = 50,
+            restorePolicy = RestorePolicy.RESTORE_PREVIOUS,
+            presetApplied = true,
+            snoozeCount = 0,
+            snoozeDueAtMillis = null,
+            snoozeDueAtElapsedRealtime = null,
+            snoozeBootCount = null,
+            state = AlarmSessionState.FIRING,
+        )
+        assertTrue(AlarmSnoozePolicy.canSnooze(base, session, 1_001L, 0))
+        assertFalse(AlarmSnoozePolicy.canSnooze(base, session, 12_999L, 12))
+        assertTrue(AlarmSnoozePolicy.canSnooze(base, session, 13_000L, 12))
+        assertFalse(AlarmSnoozePolicy.canSnooze(base, session.copy(ringStartedAtMillis = 13_000L), 13_001L, 12))
     }
 
     @Test
